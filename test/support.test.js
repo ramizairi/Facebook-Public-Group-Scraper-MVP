@@ -8,7 +8,7 @@ import { buildCheckpoint, loadCheckpoint, persistCheckpoint } from "../src/core/
 import { DedupStore } from "../src/core/dedup-store.js";
 import { normalizeCandidate } from "../src/core/normalize.js";
 import { sameGroupUrl } from "../src/utils/facebook-url.js";
-import { redactProxyConfig } from "../src/utils/redact.js";
+import { redactProxyConfig, summarizeProxyForConsole } from "../src/utils/redact.js";
 
 test("redactProxyConfig hides credentials", () => {
   const redacted = redactProxyConfig({
@@ -20,6 +20,16 @@ test("redactProxyConfig hides credentials", () => {
   assert.equal(redacted.server, "http://***:***@proxy.example:8080/");
   assert.equal(redacted.username, "***");
   assert.equal(redacted.password, "***");
+});
+
+test("summarizeProxyForConsole shows proxy host without credentials", () => {
+  const summary = summarizeProxyForConsole({
+    server: "http://user:pass@proxy.example:8080",
+    username: "user",
+    password: "pass",
+  });
+
+  assert.equal(summary, "http://proxy.example:8080");
 });
 
 test("normalizeCandidate plus DedupStore deduplicates stable posts", () => {
