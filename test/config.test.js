@@ -10,6 +10,9 @@ const ENV_KEYS = [
   "GROUP_URL",
   "MAX_POSTS",
   "RUNTIME_MINUTES",
+  "SCHEDULE_TOTAL_MINUTES",
+  "SCHEDULE_INTERVAL_MINUTES",
+  "SCHEDULE_RUN_ANALYZER",
   "PROXY_SERVER",
   "PROXY_USERNAME",
   "PROXY_PASSWORD",
@@ -151,6 +154,36 @@ test("loadConfig disables static proxy and proxy pool when --no-proxy is passed"
     assert.equal(config.noProxy, true);
     assert.equal(config.proxy, null);
     assert.equal(config.proxyPoolDir, null);
+  } finally {
+    restoreEnv(previousEnv);
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("loadConfig enables scheduled mode from env", async () => {
+  const previousEnv = snapshotEnv();
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "fb-config-test-"));
+
+  try {
+    for (const key of ENV_KEYS) {
+      delete process.env[key];
+    }
+
+    await fs.writeFile(
+      path.join(tempDir, ".env"),
+      [
+        "GROUP_URL=https://www.facebook.com/groups/scheduled-group/",
+        "SCHEDULE_TOTAL_MINUTES=120",
+        "SCHEDULE_INTERVAL_MINUTES=15",
+        "SCHEDULE_RUN_ANALYZER=true",
+      ].join("\n"),
+      "utf8",
+    );
+
+    const config = loadConfig([], tempDir);
+    assert.equal(config.scheduleTotalMinutes, 120);
+    assert.equal(config.scheduleIntervalMinutes, 15);
+    assert.equal(config.scheduleRunAnalyzer, true);
   } finally {
     restoreEnv(previousEnv);
     await fs.rm(tempDir, { recursive: true, force: true });
