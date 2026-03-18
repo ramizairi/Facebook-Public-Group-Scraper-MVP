@@ -10,6 +10,8 @@
     "start": "node src/index.js",
     "start:no-proxy": "node src/index.js --no-proxy",
     "start:proxy": "node src/index.js",
+    "start:with-proxy": "node src/index.js",
+    "analyze:xlsx": "node src/analyze/index.js",
     "test:proxy": "node src/index.js --test-proxy",
     "test": "node --test test/*.test.js"
   },
@@ -17,10 +19,12 @@
     "node": ">=22"
   },
   "dependencies": {
+    "@google/genai": "^1.46.0",
     "dotenv": "^17.3.1",
     "pino": "^10.3.1",
     "playwright": "^1.58.2",
     "proxy-chain": "^2.7.1",
+    "xlsx": "^0.18.5",
     "zod": "^4.3.6"
   }
 }
