@@ -15,6 +15,7 @@ Browser-backed Facebook public group scraper built with Node.js and Playwright. 
 - Continuously writes filtered outputs as `posts.json` and `posts.jsonl`, plus legacy-style unfiltered outputs as `posts.unfiltered.json` and `posts.unfiltered.jsonl`, along with `stats.json`, `checkpoint.json`, logs, and debug artifacts.
 - Supports resume mode with `--resume`.
 - Supports proxy verification mode with `--test-proxy`.
+- Includes a separate Gemini-to-XLSX analyzer that reads saved `posts.json` results and writes `output/xlsx/output.xlsx` without touching scraper runtime performance.
 
 ## Limitations
 
@@ -109,6 +110,12 @@ Verify outbound IP through the configured proxy:
 node src/index.js --test-proxy
 ```
 
+Generate an XLSX analysis from the latest scrape result:
+
+```bash
+npm run analyze:xlsx
+```
+
 ## Docker
 
 Build the image:
@@ -171,6 +178,17 @@ Supported `.env` variables:
 - `USER_AGENT`
 - `HEADLESS`
 - `PROXY_TEST_URL`
+- `GEMINI_API_KEY`
+- `GEMINI_MODEL`
+- `GEMINI_BATCH_SIZE`
+- `GEMINI_TEMPERATURE`
+- `GEMINI_MAX_OUTPUT_TOKENS`
+- `ANALYZER_INPUT_DIR`
+- `ANALYZER_INPUT_FILE`
+- `ANALYZER_USE_UNFILTERED_POSTS`
+- `MAX_POSTS_TO_ANALYZE`
+- `ANALYZER_OUTPUT_DIR`
+- `ANALYZER_OUTPUT_FILE`
 
 Supported CLI flags:
 
@@ -205,6 +223,7 @@ Useful npm scripts:
 - `npm run start:no-proxy`: force a direct run without proxy or proxy pool
 - `npm run start:with-proxy`: explicit alias for the proxied `.env` run
 - `npm run test:proxy`: verify outbound IP through the current proxy configuration
+- `npm run analyze:xlsx`: analyze the latest saved result folder with Gemini and export `output/xlsx/output.xlsx`
 
 ## Output
 
@@ -213,10 +232,16 @@ Each run writes into the configured output directory:
 - default path: `output/resultN`
 - `posts.json`: full normalized post array
 - `posts.jsonl`: append-friendly line-delimited post stream
+- `posts.unfiltered.json`: legacy-style post array with sparse/null-heavy posts preserved
+- `posts.unfiltered.jsonl`: append-friendly legacy line stream
 - `stats.json`: run metrics and throughput
 - `checkpoint.json`: resumable state with collected posts
 - `logs/run.log`: structured JSON logs
 - `debug/`: sampled payloads, failure screenshots, HTML snapshots, and recent network traces
+
+Analyzer output:
+
+- `output/xlsx/output.xlsx`: spreadsheet with direct fields from `posts.json` plus Gemini-derived Tunisian ride-share fields
 
 ### Normalized Post Schema
 
