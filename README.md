@@ -5,7 +5,7 @@ Browser-backed Facebook public group scraper built with Node.js and Playwright. 
 ## What It Does
 
 - Reads `GROUP_URL` from `.env` by default and allows CLI overrides.
-- Creates a fresh numbered output folder automatically as `output/resultN` unless `--output-dir` is passed explicitly.
+- Uses a cumulative output folder at `output/result` unless `--output-dir` is passed explicitly.
 - Launches a Playwright Chromium browser with optional proxy support.
 - Supports single-proxy mode or proxy-pool rotation from files such as `proxy/socket5/*.txt`.
 - Warms up a logged-out Facebook session on `facebook.com` before opening the group URL to reduce cold-start login redirects.
@@ -57,7 +57,7 @@ Run with `.env` defaults:
 node src/index.js --max-posts 100
 ```
 
-By default, each run writes into the next available folder such as `output/result1`, `output/result2`, and so on.
+By default, each run writes into the cumulative folder `output/result`.
 
 Override the group URL for a one-off run:
 
@@ -144,7 +144,7 @@ DOCKER_UID=$(id -u) DOCKER_GID=$(id -g) docker compose run --rm scraper --max-po
 Notes:
 
 - The container does not copy your local `.env` into the image.
-- Auto-generated result folders are created under `/app/output/resultN` in the container and map back to `./output/resultN` on the host.
+- The default cumulative result folder is `/app/output/result` in the container and maps back to `./output/result` on the host.
 - When you bind-mount `./output`, run the container with your host UID/GID so the scraper can write logs and JSON files without root-owned permission issues.
 - If you still need `sudo` for Docker access, export the variables first and then use `sudo -E docker compose ...`.
 - Docker support is additive only; the local Node.js workflow remains unchanged.
@@ -172,6 +172,8 @@ Supported `.env` variables:
 - `MIN_DELAY_MS`
 - `MAX_DELAY_MS`
 - `NO_NEW_POST_CYCLES`
+- `NETWORK_STALL_RECYCLE_CYCLES`
+- `MAX_NETWORK_STALL_RESTARTS`
 - `BROWSER_RECYCLE_REQUESTS`
 - `BROWSER_LOCALE`
 - `BROWSER_TIMEZONE`
@@ -213,6 +215,8 @@ Supported CLI flags:
 - `--home-warmup-delay-ms`
 - `--min-delay-ms`
 - `--max-delay-ms`
+- `--network-stall-recycle-cycles`
+- `--max-network-stall-restarts`
 - `--headless=true|false`
 
 CLI flags override `.env`.
@@ -229,7 +233,7 @@ Useful npm scripts:
 
 Each run writes into the configured output directory:
 
-- default path: `output/resultN`
+- default path: `output/result`
 - `posts.json`: full normalized post array
 - `posts.jsonl`: append-friendly line-delimited post stream
 - `posts.unfiltered.json`: legacy-style post array with sparse/null-heavy posts preserved

@@ -7,6 +7,7 @@ import test from "node:test";
 import { buildCheckpoint, loadCheckpoint, persistCheckpoint } from "../src/core/checkpoint.js";
 import { DedupStore } from "../src/core/dedup-store.js";
 import { normalizeCandidate } from "../src/core/normalize.js";
+import { extractDomPosts } from "../src/extract/dom-fallback.js";
 import { sameGroupUrl } from "../src/utils/facebook-url.js";
 import { redactProxyConfig, summarizeProxyForConsole } from "../src/utils/redact.js";
 
@@ -193,4 +194,33 @@ test("sameGroupUrl matches canonical group urls and rejects different groups", (
     ),
     false,
   );
+});
+
+test("extractDomPosts falls back to preview text when dir-auto blocks are thin", async () => {
+  const page = {
+    evaluate: async (fn, arg) =>
+      fn({
+        currentGroupSlugOrId: arg.currentGroupSlugOrId,
+      }),
+  };
+
+  page.evaluate = async (_fn, arg) => [
+    {
+      index: 0,
+      url: `https://www.facebook.com/groups/${arg.currentGroupSlugOrId}/posts/123456789012345/`,
+      authorName: "Ahmed Juriste",
+      textBlocks: ["Ahmed Juriste", "23m"],
+      media: [],
+      reactionCount: null,
+      preview:
+        "Ahmed Juriste 23m Shared with Public group 3 places disponibles demain matin de Tunis vers sousse 8h Like Comment Share",
+    },
+  ];
+
+  const posts = await extractDomPosts(page, {
+    groupUrl: "https://www.facebook.com/groups/525468629029673/",
+  });
+
+  assert.equal(posts.length, 1);
+  assert.match(posts[0].text, /3 places disponibles demain matin de Tunis vers sousse 8h/i);
 });

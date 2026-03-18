@@ -11,7 +11,12 @@ import { sleepWithJitter } from "../utils/delay.js";
 import { sameGroupUrl } from "../utils/facebook-url.js";
 import { elapsedMs, minutesToMs } from "../utils/time.js";
 import { NetworkTap } from "../extract/network-tap.js";
-import { extractDomPosts } from "../extract/dom-fallback.js";
+import {
+  extractDomPosts,
+  nudgeDomFeed,
+  prepareDomExtraction,
+  readDomFeedState,
+} from "../extract/dom-fallback.js";
 import {
   extractStructuredPostsFromDocument,
   extractStructuredPostsFromPayload,
@@ -51,6 +56,43 @@ async function settleStartupPage(page, config) {
     await new Promise((resolve) => setTimeout(resolve, config.startupSettleMs));
   }
   await dismissPotentialOverlays(page);
+}
+
+async function advanceFeed(page, config) {
+  const beforeState = await readDomFeedState(page, { groupUrl: config.groupUrl });
+
+  await dismissPotentialOverlays(page);
+  await prepareDomExtraction(page);
+  await nudgeDomFeed(page, { groupUrl: config.groupUrl });
+  await page.waitForTimeout(250).catch(() => {});
+  await page.mouse.wheel(0, 2_600).catch(() => {});
+  await page.waitForTimeout(250).catch(() => {});
+  await page.keyboard.press("PageDown").catch(() => {});
+  await page.waitForTimeout(250).catch(() => {});
+  await page
+    .evaluate(() => {
+      window.scrollBy(0, Math.max(window.innerHeight * 1.5, 1600));
+      document.scrollingElement?.scrollBy?.(0, Math.max(window.innerHeight * 1.5, 1600));
+    })
+    .catch(() => {});
+  await page.waitForTimeout(250).catch(() => {});
+  await page.keyboard.press("End").catch(() => {});
+  await sleepWithJitter(config.minDelayMs, config.maxDelayMs);
+  await dismissPotentialOverlays(page);
+
+  const afterState = await readDomFeedState(page, { groupUrl: config.groupUrl });
+  return {
+    beforeCount: beforeState.articleCount,
+    afterCount: afterState.articleCount,
+    beforeTopLevelCount: beforeState.topLevelCount,
+    afterTopLevelCount: afterState.topLevelCount,
+    beforeSignature: beforeState.lastSignature,
+    afterSignature: afterState.lastSignature,
+    increased:
+      afterState.topLevelCount > beforeState.topLevelCount ||
+      afterState.articleCount > beforeState.articleCount ||
+      (afterState.lastSignature && afterState.lastSignature !== beforeState.lastSignature),
+  };
 }
 
 async function collectNetworkCandidates(networkTap, outputManager, config) {
@@ -156,7 +198,7 @@ function shouldRotateProxy(config, reason) {
     return config.proxyRotateOnRetry;
   }
 
-  if (reason === "browser-recycle") {
+  if (reason === "browser-recycle" || reason === "network-stall") {
     return config.proxyRotateOnRecycle;
   }
 
@@ -165,6 +207,23 @@ function shouldRotateProxy(config, reason) {
   }
 
   return false;
+}
+
+function sanitizeStoredPosts(rawPosts, groupUrl, options = {}) {
+  const sanitized = [];
+  const dedupStore = new DedupStore();
+
+  for (const post of Array.isArray(rawPosts) ? rawPosts : []) {
+    const normalized = normalizeCandidate(post, groupUrl, options);
+    if (!normalized || dedupStore.has(normalized)) {
+      continue;
+    }
+
+    dedupStore.add(normalized);
+    sanitized.push(normalized);
+  }
+
+  return sanitized;
 }
 
 export async function runScraper(config, outputManager, logger) {
@@ -180,12 +239,16 @@ export async function runScraper(config, outputManager, logger) {
     });
   }
 
-  const posts =
-    Array.isArray(checkpoint?.posts) && checkpointMatchesGroup ? [...checkpoint.posts] : [];
-  const unfilteredPosts =
-    Array.isArray(checkpoint?.unfilteredPosts) && checkpointMatchesGroup
-      ? [...checkpoint.unfilteredPosts]
-      : [...posts];
+  const posts = checkpointMatchesGroup
+    ? sanitizeStoredPosts(checkpoint?.posts, config.groupUrl)
+    : [];
+  const unfilteredPosts = checkpointMatchesGroup
+    ? sanitizeStoredPosts(
+        Array.isArray(checkpoint?.unfilteredPosts) ? checkpoint.unfilteredPosts : checkpoint?.posts,
+        config.groupUrl,
+        { allowShellPosts: true },
+      )
+    : [...posts];
   const dedupStore = new DedupStore(posts);
   const unfilteredDedupStore = new DedupStore(unfilteredPosts);
   const metrics = new MetricsTracker(posts.length);
@@ -205,6 +268,8 @@ export async function runScraper(config, outputManager, logger) {
       ? Math.max(config.startupRetries + 1, proxyPool.proxies.length)
       : config.startupRetries + 1;
   let blockedSessionRotations = 0;
+  let networkStallCycles = 0;
+  let networkStallRestarts = 0;
   const maxBlockedSessionRotations = Math.max(config.startupRetries + 1, proxyPool?.proxies.length ?? 0);
 
   await outputManager.resetPosts(posts, unfilteredPosts);
@@ -260,6 +325,65 @@ export async function runScraper(config, outputManager, logger) {
       unfilteredPosts,
       unfilteredDedupStore,
     };
+    const bootstrapFreshSession = async (reason) => {
+      await startSession(reason);
+      await settleStartupPage(session.page, config);
+
+      const freshCandidates = [
+        ...(await collectDocumentCandidates(session.page, config)),
+        ...(await collectNetworkCandidates(networkTap, outputManager, config)),
+      ];
+
+      let {
+        accepted: freshAccepted,
+        unfilteredAccepted: freshUnfilteredAccepted,
+        skippedForeignGroup,
+      } = acceptCandidates({
+        candidates: freshCandidates,
+        posts,
+        dedupStore,
+        metrics,
+        config: acceptConfig,
+      });
+
+      if (skippedForeignGroup > 0) {
+        logger.info({
+          event: "skipped-foreign-group-posts",
+          count: skippedForeignGroup,
+          requestedGroupUrl: config.groupUrl,
+        });
+      }
+
+      if (!freshAccepted.length) {
+        const domResult = acceptCandidates({
+          candidates: await extractDomPosts(session.page, { groupUrl: config.groupUrl }),
+          posts,
+          dedupStore,
+          metrics,
+          config: acceptConfig,
+        });
+        freshAccepted = domResult.accepted;
+        freshUnfilteredAccepted = [
+          ...freshUnfilteredAccepted,
+          ...domResult.unfilteredAccepted.filter((post) => !freshUnfilteredAccepted.some((item) => item.id === post.id && item.url === post.url)),
+        ];
+      }
+
+      await outputManager.appendPosts(freshAccepted, freshUnfilteredAccepted);
+      const refreshedStats = await persistRunState({
+        config,
+        posts,
+        unfilteredPosts,
+        outputManager,
+        metrics,
+        networkTap: { getStats: buildNetworkSnapshot },
+      });
+      printProgress(refreshedStats);
+
+      return {
+        accepted: freshAccepted,
+      };
+    };
 
     for (let attempt = 0; attempt < maxStartupAttempts; attempt += 1) {
       if (attempt > 0) {
@@ -275,53 +399,8 @@ export async function runScraper(config, outputManager, logger) {
       }
 
       try {
-        await startSession(attempt > 0 ? "startup-retry" : "initial");
-        await settleStartupPage(session.page, config);
-
-        const initialCandidates = [
-          ...(await collectDocumentCandidates(session.page, config)),
-          ...(await collectNetworkCandidates(networkTap, outputManager, config)),
-        ];
-
-        const initialResult = acceptCandidates({
-          candidates: initialCandidates,
-          posts,
-          dedupStore,
-          metrics,
-          config: acceptConfig,
-        });
+        const initialResult = await bootstrapFreshSession(attempt > 0 ? "startup-retry" : "initial");
         accepted = initialResult.accepted;
-
-        if (initialResult.skippedForeignGroup > 0) {
-          logger.info({
-            event: "skipped-foreign-group-posts",
-            count: initialResult.skippedForeignGroup,
-            requestedGroupUrl: config.groupUrl,
-          });
-        }
-
-        if (!accepted.length) {
-          const domResult = acceptCandidates({
-            candidates: await extractDomPosts(session.page, { groupUrl: config.groupUrl }),
-            posts,
-            dedupStore,
-            metrics,
-            config: acceptConfig,
-          });
-          accepted = domResult.accepted;
-          await outputManager.appendPosts([], domResult.unfilteredAccepted);
-        }
-
-        await outputManager.appendPosts(accepted, initialResult.unfilteredAccepted);
-        const stats = await persistRunState({
-          config,
-          posts,
-          unfilteredPosts,
-          outputManager,
-          metrics,
-          networkTap: { getStats: buildNetworkSnapshot },
-        });
-        printProgress(stats);
 
         initialBlockState = await detectBlockState(session.page);
         if (accepted.length > 0 || !initialBlockState.blocked) {
@@ -388,13 +467,12 @@ export async function runScraper(config, outputManager, logger) {
       }
 
       metrics.recordCycle();
-      await session.page.mouse.wheel(0, 2_400);
-      await sleepWithJitter(config.minDelayMs, config.maxDelayMs);
+      const feedAdvance = await advanceFeed(session.page, config);
 
       const cycleCandidates = collectNetworkCandidates(networkTap, outputManager, config);
       const structuredCandidates = await cycleCandidates;
       let {
-        accepted: newlyAccepted,
+        accepted: networkAccepted,
         unfilteredAccepted: newlyUnfilteredAccepted,
         skippedForeignGroup,
       } = acceptCandidates({
@@ -412,6 +490,7 @@ export async function runScraper(config, outputManager, logger) {
         });
       }
 
+      let newlyAccepted = networkAccepted;
       if (!newlyAccepted.length) {
         const domResult = acceptCandidates({
           candidates: await extractDomPosts(session.page, { groupUrl: config.groupUrl }),
@@ -424,9 +503,13 @@ export async function runScraper(config, outputManager, logger) {
         newlyUnfilteredAccepted = domResult.unfilteredAccepted;
       }
 
-      noNewCycles = newlyAccepted.length ? 0 : noNewCycles + 1;
+      const hadFreshNetworkProgress = networkAccepted.length > 0;
+      networkStallCycles =
+        !newlyAccepted.length && !hadFreshNetworkProgress && !feedAdvance.increased ? networkStallCycles + 1 : 0;
+      noNewCycles = newlyAccepted.length || feedAdvance.increased ? 0 : noNewCycles + 1;
       if (newlyAccepted.length) {
         blockedSessionRotations = 0;
+        networkStallRestarts = 0;
       }
       await outputManager.appendPosts(newlyAccepted, newlyUnfilteredAccepted);
 
@@ -440,6 +523,34 @@ export async function runScraper(config, outputManager, logger) {
         networkTap: { getStats: buildNetworkSnapshot },
       });
       printProgress(stats);
+
+      if (
+        !blockState.blocked &&
+        networkStallCycles >= config.networkStallRecycleCycles &&
+        networkStallRestarts < config.maxNetworkStallRestarts
+      ) {
+        logger.info({
+          event: "network-stall-recycle",
+          networkStallCycles,
+          attempt: networkStallRestarts + 1,
+          maxAttempts: config.maxNetworkStallRestarts,
+        });
+        networkStallRestarts += 1;
+        metrics.recordRetry();
+        archiveCurrentNetworkStats();
+        networkTap.detach();
+        await closeBrowserSession(session);
+        session = null;
+        networkTap = null;
+        noNewCycles = 0;
+        networkStallCycles = 0;
+        const refreshed = await bootstrapFreshSession("network-stall");
+        if (refreshed.accepted.length) {
+          blockedSessionRotations = 0;
+          networkStallRestarts = 0;
+        }
+        continue;
+      }
 
       if (blockState.blocked && newlyAccepted.length === 0) {
         await outputManager.captureFailure(session.page, networkTap, "blocked-during-run", blockState);
