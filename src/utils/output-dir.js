@@ -23,6 +23,13 @@ function listResultNumbers(outputRoot) {
   }
 }
 
+export function resolveLatestResultDir(cwd) {
+  const outputRoot = path.join(cwd, "output");
+  const resultNumbers = listResultNumbers(outputRoot);
+  const latest = resultNumbers.at(-1);
+  return latest ? path.join(outputRoot, `result${latest}`) : null;
+}
+
 export function resolveAutoOutputDir(cwd, { resume = false } = {}) {
   const outputRoot = path.join(cwd, "output");
   const resultNumbers = listResultNumbers(outputRoot);
