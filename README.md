@@ -12,7 +12,7 @@ Browser-backed Facebook public group scraper built with Node.js and Playwright. 
 - Captures relevant network/document payloads and extracts posts from embedded JSON or response bodies first.
 - Falls back to `[role="feed"] [role="article"]` DOM parsing when structured extraction yields nothing new.
 - Deduplicates posts by stable IDs and canonical URLs.
-- Continuously writes `posts.json`, `posts.jsonl`, `stats.json`, `checkpoint.json`, logs, and debug artifacts.
+- Continuously writes filtered outputs as `posts.json` and `posts.jsonl`, plus legacy-style unfiltered outputs as `posts.unfiltered.json` and `posts.unfiltered.jsonl`, along with `stats.json`, `checkpoint.json`, logs, and debug artifacts.
 - Supports resume mode with `--resume`.
 - Supports proxy verification mode with `--test-proxy`.
 

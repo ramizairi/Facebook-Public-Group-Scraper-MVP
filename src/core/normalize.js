@@ -78,7 +78,21 @@ function normalizeMedia(media) {
   return deduped;
 }
 
-export function normalizeCandidate(candidate, defaultGroupUrl) {
+function hasUsefulPostData(payload) {
+  return Boolean(
+    payload.authorName ||
+      payload.authorId ||
+      payload.createdAt ||
+      payload.text ||
+      payload.media.length > 0 ||
+      (payload.reactionCount ?? 0) > 0 ||
+      (payload.commentCount ?? 0) > 0 ||
+      (payload.shareCount ?? 0) > 0,
+  );
+}
+
+export function normalizeCandidate(candidate, defaultGroupUrl, options = {}) {
+  const allowShellPosts = options.allowShellPosts === true;
   const normalizedUrl = normalizePostUrl(candidate.url) ?? null;
   const postInfo = extractPostInfoFromUrl(normalizedUrl ?? candidate.url);
   const stableId = String(candidate.id ?? postInfo?.postId ?? "").trim();
@@ -105,6 +119,10 @@ export function normalizeCandidate(candidate, defaultGroupUrl) {
     sourceType: candidate.sourceType === "dom" ? "dom" : "network",
     rawFragment: candidate.rawFragment ?? null,
   };
+
+  if (!allowShellPosts && !hasUsefulPostData(payload)) {
+    return null;
+  }
 
   const result = NormalizedPostSchema.safeParse(payload);
   return result.success ? result.data : null;

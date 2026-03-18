@@ -1,5 +1,4 @@
-brd.superproxy.io:9222:brd-customer-hl_b4d20f7e-zone-mobile_proxy1:95wyfvhz8zz4
-brd.superproxy.io:33335:brd-customer-hl_b4d20f7e-zone-residential_proxy1:x4bozr62uvwk
+brd.superproxy.io:9515:brd-customer-hl_b4d20f7e-zone-mobile_proxy1:95wyfvhz8zz4
 31.59.20.176:6754:ebywkquq:4d37d73jym2m
 23.95.150.145:6114:ebywkquq:4d37d73jym2m
 198.23.239.134:6540:ebywkquq:4d37d73jym2m
@@ -10,3 +9,4 @@ brd.superproxy.io:33335:brd-customer-hl_b4d20f7e-zone-residential_proxy1:x4bozr6
 216.10.27.159:6837:ebywkquq:4d37d73jym2m
 142.111.67.146:5611:ebywkquq:4d37d73jym2m
 191.96.254.138:6185:ebywkquq:4d37d73jym2m
+brd.superproxy.io:33335:brd-customer-hl_b4d20f7e-zone-residential_proxy1:x4bozr62uvwk

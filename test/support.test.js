@@ -65,6 +65,60 @@ test("normalizeCandidate plus DedupStore deduplicates stable posts", () => {
   assert.equal(dedup.has(second), true);
 });
 
+test("normalizeCandidate drops shell posts with no useful non-null fields", () => {
+  const normalized = normalizeCandidate(
+    {
+      id: "1471855064391020",
+      url: "https://www.facebook.com/groups/525468629029673/posts/1471855064391020/",
+      groupUrl: "https://www.facebook.com/groups/525468629029673/",
+      authorName: null,
+      authorId: null,
+      createdAt: null,
+      text: null,
+      media: [],
+      reactionCount: null,
+      commentCount: null,
+      shareCount: null,
+      sourceType: "network",
+      rawFragment: {
+        source: "document-embedded-json",
+        reference: "1471855064391020:document-embedded-json",
+      },
+    },
+    "https://www.facebook.com/groups/525468629029673/",
+  );
+
+  assert.equal(normalized, null);
+});
+
+test("normalizeCandidate can keep shell posts in unfiltered mode", () => {
+  const normalized = normalizeCandidate(
+    {
+      id: "1471855064391020",
+      url: "https://www.facebook.com/groups/525468629029673/posts/1471855064391020/",
+      groupUrl: "https://www.facebook.com/groups/525468629029673/",
+      authorName: null,
+      authorId: null,
+      createdAt: null,
+      text: null,
+      media: [],
+      reactionCount: null,
+      commentCount: null,
+      shareCount: null,
+      sourceType: "network",
+      rawFragment: {
+        source: "document-embedded-json",
+        reference: "1471855064391020:document-embedded-json",
+      },
+    },
+    "https://www.facebook.com/groups/525468629029673/",
+    { allowShellPosts: true },
+  );
+
+  assert.equal(normalized?.id, "1471855064391020");
+  assert.equal(normalized?.text, null);
+});
+
 test("checkpoint persistence round-trips posts and stats", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "fb-checkpoint-test-"));
 
@@ -91,6 +145,23 @@ test("checkpoint persistence round-trips posts and stats", async () => {
           rawFragment: null,
         },
       ],
+      unfilteredPosts: [
+        {
+          id: "2",
+          url: "https://www.facebook.com/groups/123456789012345/posts/2/",
+          groupUrl: "https://www.facebook.com/groups/123456789012345/",
+          authorName: null,
+          authorId: null,
+          createdAt: null,
+          text: null,
+          media: [],
+          reactionCount: null,
+          commentCount: null,
+          shareCount: null,
+          sourceType: "network",
+          rawFragment: null,
+        },
+      ],
       stats: {
         uniquePosts: 1,
       },
@@ -99,6 +170,7 @@ test("checkpoint persistence round-trips posts and stats", async () => {
     await persistCheckpoint(tempDir, checkpoint);
     const loaded = await loadCheckpoint(tempDir);
     assert.equal(loaded.posts.length, 1);
+    assert.equal(loaded.unfilteredPosts.length, 1);
     assert.equal(loaded.stats.uniquePosts, 1);
   } finally {
     await fs.rm(tempDir, { recursive: true, force: true });
