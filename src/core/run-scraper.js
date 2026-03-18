@@ -1,0 +1,431 @@
+import { buildCheckpoint, loadCheckpoint, persistCheckpoint } from "./checkpoint.js";
+import { DedupStore } from "./dedup-store.js";
+import { detectBlockState } from "./block-detection.js";
+import { MetricsTracker } from "./metrics.js";
+import { normalizeCandidate } from "./normalize.js";
+import { closeBrowserSession, launchBrowserSession } from "../browser/session.js";
+import { warmupFacebookSession } from "../browser/warmup.js";
+import { sleepWithJitter } from "../utils/delay.js";
+import { sameGroupUrl } from "../utils/facebook-url.js";
+import { elapsedMs, minutesToMs } from "../utils/time.js";
+import { NetworkTap } from "../extract/network-tap.js";
+import { extractDomPosts } from "../extract/dom-fallback.js";
+import {
+  extractStructuredPostsFromDocument,
+  extractStructuredPostsFromPayload,
+} from "../extract/structured-parser.js";
+import { printProgress } from "../output/logger.js";
+
+async function navigateToGroup(page, groupUrl) {
+  await page.goto(groupUrl, {
+    waitUntil: "domcontentloaded",
+  });
+
+  await page.keyboard.press("Escape").catch(() => {});
+}
+
+async function dismissPotentialOverlays(page) {
+  await page.keyboard.press("Escape").catch(() => {});
+  await page
+    .evaluate(() => {
+      const candidates = Array.from(
+        document.querySelectorAll(
+          'div[role="dialog"] button, div[role="dialog"] [role="button"], div[role="dialog"] [aria-label]',
+        ),
+      );
+      const closeLike = candidates.find((element) => {
+        const label = `${element.getAttribute("aria-label") ?? ""} ${element.textContent ?? ""}`.trim();
+        return /close|not now|dismiss/i.test(label);
+      });
+
+      closeLike?.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    })
+    .catch(() => {});
+}
+
+async function settleStartupPage(page, config) {
+  await dismissPotentialOverlays(page);
+  if (config.startupSettleMs > 0) {
+    await new Promise((resolve) => setTimeout(resolve, config.startupSettleMs));
+  }
+  await dismissPotentialOverlays(page);
+}
+
+async function collectNetworkCandidates(networkTap, outputManager, config) {
+  const payloads = networkTap.drainRelevantPayloads();
+  await outputManager.writePayloadSamples(payloads);
+
+  const candidates = [];
+  for (const payload of payloads) {
+    candidates.push(...extractStructuredPostsFromPayload(payload, { groupUrl: config.groupUrl }));
+  }
+
+  return candidates;
+}
+
+async function collectDocumentCandidates(page, config) {
+  const html = await page.content();
+  return extractStructuredPostsFromDocument(html, { groupUrl: config.groupUrl });
+}
+
+function acceptCandidates({ candidates, posts, dedupStore, metrics, config }) {
+  const accepted = [];
+  let skippedForeignGroup = 0;
+
+  for (const candidate of candidates) {
+    const normalized = normalizeCandidate(candidate, config.groupUrl);
+    if (!normalized) {
+      continue;
+    }
+
+    if (!sameGroupUrl(normalized.groupUrl, config.groupUrl)) {
+      skippedForeignGroup += 1;
+      continue;
+    }
+
+    if (dedupStore.has(normalized)) {
+      continue;
+    }
+
+    dedupStore.add(normalized);
+    posts.push(normalized);
+    accepted.push(normalized);
+    metrics.recordAccepted(normalized);
+
+    if (posts.length >= config.maxPosts) {
+      break;
+    }
+  }
+
+  return {
+    accepted,
+    skippedForeignGroup,
+  };
+}
+
+async function persistRunState({ config, posts, outputManager, metrics, networkTap }) {
+  const stats = metrics.snapshot({
+    uniquePosts: posts.length,
+    networkStats: networkTap.getStats(),
+  });
+
+  await outputManager.writePostsJson(posts);
+  await outputManager.writeStats(stats);
+  await persistCheckpoint(
+    config.outputDir,
+    buildCheckpoint({
+      config,
+      posts,
+      stats,
+    }),
+  );
+
+  return stats;
+}
+
+function reachedRuntimeLimit(config, startedAtMs) {
+  if (config.runtimeMinutes == null) {
+    return false;
+  }
+
+  const runtimeLimitMs = minutesToMs(config.runtimeMinutes);
+  return elapsedMs(startedAtMs) >= runtimeLimitMs;
+}
+
+function shouldRecycleBrowser(config, networkTap) {
+  return networkTap.getStats().totalRequests >= config.browserRecycleRequests;
+}
+
+export async function runScraper(config, outputManager, logger) {
+  const checkpoint = config.resume ? await loadCheckpoint(config.outputDir) : null;
+  const checkpointMatchesGroup =
+    checkpoint?.groupUrl == null || sameGroupUrl(checkpoint.groupUrl, config.groupUrl);
+  if (config.resume && checkpoint && !checkpointMatchesGroup) {
+    logger.warn({
+      event: "checkpoint-group-mismatch",
+      checkpointGroupUrl: checkpoint.groupUrl,
+      requestedGroupUrl: config.groupUrl,
+      outputDir: config.outputDir,
+    });
+  }
+
+  const posts =
+    Array.isArray(checkpoint?.posts) && checkpointMatchesGroup ? [...checkpoint.posts] : [];
+  const dedupStore = new DedupStore(posts);
+  const metrics = new MetricsTracker(posts.length);
+  const startedAtMs = Date.now();
+  const archivedNetworkStats = {
+    totalRequests: 0,
+    totalResponses: 0,
+    relevantResponses: 0,
+    failedRequests: 0,
+  };
+  let noNewCycles = 0;
+  let session = null;
+  let networkTap = null;
+
+  await outputManager.resetPosts(posts);
+
+  const buildNetworkSnapshot = () => {
+    const current = networkTap?.getStats() ?? {
+      totalRequests: 0,
+      totalResponses: 0,
+      relevantResponses: 0,
+      failedRequests: 0,
+    };
+
+    return {
+      totalRequests: archivedNetworkStats.totalRequests + current.totalRequests,
+      totalResponses: archivedNetworkStats.totalResponses + current.totalResponses,
+      relevantResponses: archivedNetworkStats.relevantResponses + current.relevantResponses,
+      failedRequests: archivedNetworkStats.failedRequests + current.failedRequests,
+    };
+  };
+
+  const archiveCurrentNetworkStats = () => {
+    const current = networkTap?.getStats();
+    if (!current) {
+      return;
+    }
+
+    archivedNetworkStats.totalRequests += current.totalRequests;
+    archivedNetworkStats.totalResponses += current.totalResponses;
+    archivedNetworkStats.relevantResponses += current.relevantResponses;
+    archivedNetworkStats.failedRequests += current.failedRequests;
+  };
+
+  const startSession = async () => {
+    session = await launchBrowserSession(config, logger);
+    await warmupFacebookSession(session, config, logger);
+    networkTap = new NetworkTap(logger);
+    networkTap.attach(session.page);
+    await navigateToGroup(session.page, config.groupUrl);
+    await sleepWithJitter(config.minDelayMs, config.maxDelayMs);
+  };
+
+  try {
+    let accepted = [];
+    let initialBlockState = null;
+
+    for (let attempt = 0; attempt <= config.startupRetries; attempt += 1) {
+      if (attempt > 0) {
+        metrics.recordRetry();
+      }
+
+      if (session) {
+        archiveCurrentNetworkStats();
+        networkTap.detach();
+        await closeBrowserSession(session);
+        session = null;
+        networkTap = null;
+      }
+
+      await startSession();
+      await settleStartupPage(session.page, config);
+
+      const initialCandidates = [
+        ...(await collectDocumentCandidates(session.page, config)),
+        ...(await collectNetworkCandidates(networkTap, outputManager, config)),
+      ];
+
+      const initialResult = acceptCandidates({
+        candidates: initialCandidates,
+        posts,
+        dedupStore,
+        metrics,
+        config,
+      });
+      accepted = initialResult.accepted;
+
+      if (initialResult.skippedForeignGroup > 0) {
+        logger.info({
+          event: "skipped-foreign-group-posts",
+          count: initialResult.skippedForeignGroup,
+          requestedGroupUrl: config.groupUrl,
+        });
+      }
+
+      if (!accepted.length) {
+        const domResult = acceptCandidates({
+          candidates: await extractDomPosts(session.page, { groupUrl: config.groupUrl }),
+          posts,
+          dedupStore,
+          metrics,
+          config,
+        });
+        accepted = domResult.accepted;
+      }
+
+      await outputManager.appendPosts(accepted);
+      const stats = await persistRunState({
+        config,
+        posts,
+        outputManager,
+        metrics,
+        networkTap: { getStats: buildNetworkSnapshot },
+      });
+      printProgress(stats);
+
+      initialBlockState = await detectBlockState(session.page);
+      if (accepted.length > 0 || !initialBlockState.blocked) {
+        break;
+      }
+
+      logger.info({
+        event: "startup-retry",
+        attempt: attempt + 1,
+        maxAttempts: config.startupRetries + 1,
+        reason: initialBlockState.reason,
+        snapshot: initialBlockState.snapshot,
+      });
+    }
+
+    if (initialBlockState?.blocked && posts.length === 0) {
+      await outputManager.captureFailure(session.page, networkTap, "blocked-initial", initialBlockState);
+      throw new Error(`Blocked before usable data was exposed: ${initialBlockState.reason}`);
+    }
+
+    let stats = await persistRunState({
+      config,
+      posts,
+      outputManager,
+      metrics,
+      networkTap: { getStats: buildNetworkSnapshot },
+    });
+
+    while (posts.length < config.maxPosts) {
+      if (reachedRuntimeLimit(config, startedAtMs)) {
+        logger.info({ event: "stop", reason: "runtime-limit" });
+        break;
+      }
+
+      if (noNewCycles >= config.noNewPostCycles) {
+        logger.info({ event: "stop", reason: "no-new-posts", noNewCycles });
+        break;
+      }
+
+      metrics.recordCycle();
+      await session.page.mouse.wheel(0, 2_400);
+      await sleepWithJitter(config.minDelayMs, config.maxDelayMs);
+
+      const cycleCandidates = collectNetworkCandidates(networkTap, outputManager, config);
+      const structuredCandidates = await cycleCandidates;
+      let {
+        accepted: newlyAccepted,
+        skippedForeignGroup,
+      } = acceptCandidates({
+        candidates: structuredCandidates,
+        posts,
+        dedupStore,
+        metrics,
+        config,
+      });
+      if (skippedForeignGroup > 0) {
+        logger.info({
+          event: "skipped-foreign-group-posts",
+          count: skippedForeignGroup,
+          requestedGroupUrl: config.groupUrl,
+        });
+      }
+
+      if (!newlyAccepted.length) {
+        const domResult = acceptCandidates({
+          candidates: await extractDomPosts(session.page, { groupUrl: config.groupUrl }),
+          posts,
+          dedupStore,
+          metrics,
+          config,
+        });
+        newlyAccepted = domResult.accepted;
+      }
+
+      noNewCycles = newlyAccepted.length ? 0 : noNewCycles + 1;
+      await outputManager.appendPosts(newlyAccepted);
+
+      const blockState = await detectBlockState(session.page);
+      stats = await persistRunState({
+        config,
+        posts,
+        outputManager,
+        metrics,
+        networkTap: { getStats: buildNetworkSnapshot },
+      });
+      printProgress(stats);
+
+      if (blockState.blocked && newlyAccepted.length === 0) {
+        await outputManager.captureFailure(session.page, networkTap, "blocked-during-run", blockState);
+        logger.info({ event: "stop", reason: blockState.reason });
+        break;
+      }
+
+      if (posts.length >= config.maxPosts) {
+        logger.info({ event: "stop", reason: "max-posts" });
+        break;
+      }
+
+      if (shouldRecycleBrowser(config, networkTap)) {
+        logger.info({
+          event: "browser-recycle",
+          totalRequests: networkTap.getStats().totalRequests,
+        });
+        metrics.recordRetry();
+        await persistRunState({
+          config,
+          posts,
+          outputManager,
+          metrics,
+          networkTap: { getStats: buildNetworkSnapshot },
+        });
+        archiveCurrentNetworkStats();
+        networkTap.detach();
+        await closeBrowserSession(session);
+        await startSession();
+      }
+    }
+
+    const finalStats = await persistRunState({
+      config,
+      posts,
+      outputManager,
+      metrics,
+      networkTap: { getStats: buildNetworkSnapshot },
+    });
+
+    if (!posts.length) {
+      await outputManager.captureFailure(session.page, networkTap, "no-posts", {
+        reason: "No usable posts were extracted from network or DOM sources.",
+      });
+    }
+
+    return {
+      posts,
+      stats: finalStats,
+    };
+  } catch (error) {
+    metrics.recordFailure();
+    if (session?.page) {
+      await outputManager.captureFailure(session.page, networkTap, "run-error", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+
+    if (networkTap) {
+      archiveCurrentNetworkStats();
+      await persistRunState({
+        config,
+        posts,
+        outputManager,
+        metrics,
+        networkTap: { getStats: () => archivedNetworkStats },
+      });
+    }
+
+    throw error;
+  } finally {
+    if (networkTap) {
+      networkTap.detach();
+    }
+
+    await closeBrowserSession(session);
+  }
+}

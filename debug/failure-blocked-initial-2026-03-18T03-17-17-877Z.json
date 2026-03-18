@@ -1,0 +1,17 @@
+{
+  "label": "blocked-initial",
+  "capturedAt": "2026-03-18T03:17:17.954Z",
+  "blocked": true,
+  "reason": "redirected-to-login",
+  "snapshot": {
+    "url": "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2Fgroups%2F525468629029673%2F",
+    "title": "Log into Facebook",
+    "bodyText": "Notice You must log in to continue. Log Into Facebook You must log in to continue. Log In Forgot account? or Create new account English (US) Français (France) العربية Italiano Deutsch Español Русский Português (Brasil) हिन्दी 中文(简体) 日本語 Sign UpLog InMessengerFacebook LiteVideoMeta PayMeta StoreMeta QuestRay-Ban MetaMeta AIInstagramThreadsPrivacy PolicyPrivacy CenterAboutCreate adCreate PageDevelopersCareersCookiesAd choices TermsHelpContact Uploading & Non-Users Settings Activity log Meta © 2026",
+    "hasFeed": false,
+    "visibleFeedPostLinks": 0,
+    "visibleAnyPostLinks": 0,
+    "scriptJsonCount": 0,
+    "groupTabCount": 0,
+    "hasGroupHeading": false
+  }
+}

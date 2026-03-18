@@ -1,0 +1,793 @@
+[
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:13.131Z",
+    "method": "GET",
+    "resourceType": "document",
+    "url": "https://www.facebook.com/groups/525468629029673/"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:13.447Z",
+    "method": "GET",
+    "resourceType": "document",
+    "url": "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2Fgroups%2F525468629029673%2F"
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:13.446Z",
+    "method": "GET",
+    "resourceType": "document",
+    "url": "https://www.facebook.com/groups/525468629029673/",
+    "status": 302,
+    "bodyReadError": "response.text: Response body is unavailable for redirect responses",
+    "contentType": "text/html; charset=\"utf-8\"",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:13.893Z",
+    "method": "GET",
+    "resourceType": "stylesheet",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v5/yn/l/0,cross/IlNQNU03Fgi.css"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:13.893Z",
+    "method": "GET",
+    "resourceType": "stylesheet",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v5/yi/l/0,cross/RSF7TVqey1v.css"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:13.894Z",
+    "method": "GET",
+    "resourceType": "stylesheet",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v5/ye/l/0,cross/QMmRM8TBFuH.css"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:13.894Z",
+    "method": "GET",
+    "resourceType": "stylesheet",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v5/yW/l/0,cross/i9rgXw1QTaH.css"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:13.894Z",
+    "method": "GET",
+    "resourceType": "stylesheet",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v5/yO/l/0,cross/JOGH3QEYy04.css"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:13.894Z",
+    "method": "GET",
+    "resourceType": "stylesheet",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v5/yi/l/0,cross/zKBXJEviqxu.css"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:13.894Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yu/r/ndkBrovnCWg.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:13.894Z",
+    "method": "GET",
+    "resourceType": "image",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/y1/r/4lCu2zih0ca.svg"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:13.894Z",
+    "method": "GET",
+    "resourceType": "image",
+    "url": "https://facebook.com/security/hsts-pixel.gif"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:13.894Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yZ/r/keplf93Y7yg.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:13.894Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yV/r/lc-UAfmYh9b.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:13.894Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4i7M54/y8/l/en_US-j/5FSPfRZpK5k.js"
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:13.813Z",
+    "method": "GET",
+    "resourceType": "document",
+    "url": "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2Fgroups%2F525468629029673%2F",
+    "status": 200,
+    "contentType": "text/html; charset=\"utf-8\"",
+    "relevant": false,
+    "relevanceScore": 1,
+    "relevanceReasons": [
+      "content-type"
+    ]
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.066Z",
+    "method": "GET",
+    "resourceType": "stylesheet",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v5/yn/l/0,cross/IlNQNU03Fgi.css",
+    "status": 200,
+    "contentType": "text/css; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.068Z",
+    "method": "GET",
+    "resourceType": "stylesheet",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v5/yi/l/0,cross/zKBXJEviqxu.css",
+    "status": 200,
+    "contentType": "text/css; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.069Z",
+    "method": "GET",
+    "resourceType": "stylesheet",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v5/yO/l/0,cross/JOGH3QEYy04.css",
+    "status": 200,
+    "contentType": "text/css; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.123Z",
+    "method": "GET",
+    "resourceType": "stylesheet",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v5/yW/l/0,cross/i9rgXw1QTaH.css",
+    "status": 200,
+    "contentType": "text/css; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.128Z",
+    "method": "GET",
+    "resourceType": "stylesheet",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v5/ye/l/0,cross/QMmRM8TBFuH.css",
+    "status": 200,
+    "contentType": "text/css; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.133Z",
+    "method": "GET",
+    "resourceType": "stylesheet",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v5/yi/l/0,cross/RSF7TVqey1v.css",
+    "status": 200,
+    "contentType": "text/css; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.192Z",
+    "method": "GET",
+    "resourceType": "image",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/y1/r/4lCu2zih0ca.svg",
+    "status": 200,
+    "contentType": "image/svg+xml",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.261Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yV/r/lc-UAfmYh9b.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.267Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yu/r/ndkBrovnCWg.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.271Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yZ/r/keplf93Y7yg.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.313Z",
+    "method": "GET",
+    "resourceType": "image",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/y2/r/sOGcoxVJfi5.png"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.313Z",
+    "method": "GET",
+    "resourceType": "image",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yJ/r/n_0PeIDvM8M.png"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.323Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yk/r/PUVaemHRVQS.js"
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.343Z",
+    "method": "GET",
+    "resourceType": "image",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/y2/r/sOGcoxVJfi5.png",
+    "status": 200,
+    "contentType": "image/png",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.344Z",
+    "method": "GET",
+    "resourceType": "image",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yJ/r/n_0PeIDvM8M.png",
+    "status": 200,
+    "contentType": "image/png",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.344Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4i7M54/y8/l/en_US-j/5FSPfRZpK5k.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.384Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yk/r/PUVaemHRVQS.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.391Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/ys/r/oPNPGqSST9y.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.391Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4i4wF4/yD/l/en_US-j/q3Om3p0HKgw.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.392Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yX/r/34X2YpLaKen.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.392Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yg/r/OqUIcVN3AQO.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.392Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yJ/r/T-cu1f83Bjy.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.392Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yu/r/3M28pRZAj9B.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.392Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yU/r/KSwKqkTiCZ0.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.392Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/y_/r/BIZTbR5hdmb.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.392Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yi/r/hw1Yq3CFJHM.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.392Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/y6/r/I0oL6B-uUlf.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.392Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yW/r/t0FOBG6gQAk.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.392Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/y2/r/8VS9CQF3Rgm.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.392Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yN/r/1SW3OTgRDdC.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.392Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yk/r/f3ndRTd2RiZ.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.392Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yl/r/rUrf87x21zU.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.392Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/ye/r/Nuun0c1UVZd.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.392Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/y-/r/su4qmaQSp9C.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.392Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yR/r/XAqzp11_JpC.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.392Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/y8/r/GKU4lvpjmBB.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.393Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/ym/r/zhK17QCJvRT.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.393Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4ibQ14/yT/l/en_US-j/ivts9W8pdk8.js"
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.400Z",
+    "method": "GET",
+    "resourceType": "image",
+    "url": "https://facebook.com/security/hsts-pixel.gif",
+    "status": 200,
+    "contentType": "image/gif",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.461Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/ys/r/oPNPGqSST9y.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.481Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4i4wF4/yD/l/en_US-j/q3Om3p0HKgw.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.484Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yX/r/34X2YpLaKen.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.484Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yg/r/OqUIcVN3AQO.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.484Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yJ/r/T-cu1f83Bjy.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.485Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yu/r/3M28pRZAj9B.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.489Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yU/r/KSwKqkTiCZ0.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.502Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/y_/r/BIZTbR5hdmb.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.510Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yi/r/hw1Yq3CFJHM.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.512Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/y6/r/I0oL6B-uUlf.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.532Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yW/r/t0FOBG6gQAk.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.534Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/y2/r/8VS9CQF3Rgm.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.534Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yk/r/f3ndRTd2RiZ.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.534Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yN/r/1SW3OTgRDdC.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.535Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yl/r/rUrf87x21zU.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.542Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/ye/r/Nuun0c1UVZd.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.586Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yR/r/XAqzp11_JpC.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.587Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/y8/r/GKU4lvpjmBB.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.587Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/y-/r/su4qmaQSp9C.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.596Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/ym/r/zhK17QCJvRT.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.605Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4ibQ14/yT/l/en_US-j/ivts9W8pdk8.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.642Z",
+    "method": "POST",
+    "resourceType": "xhr",
+    "url": "https://www.facebook.com/ajax/bz?__a=1&__aaid=0&__ccg=GOOD&__dyn=7xe6E5aQ1PyUbFp41twpUnwgU29zE6u7E3rw5ux609vCwjE1EE2Cw8G1Qw5Mx61vw5zwqo1nE1u83mwaS0zK1sw2oEG0xo2ewbS1Lw7Jw5lw8S0rq&__hs=20530.BP%3ADEFAULT.2.0...0&__hsi=7618429454034710945&__req=1&__rev=1035370989&__s=ryo4f6%3Andw8qy%3Asdvy81&__spin_b=trunk&__spin_r=1035370989&__spin_t=1773803833&__user=0&dpr=1&jazoest=22319&lsd=AdR2nHCqiBcv2cXeuX-FMLEohNc"
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:14.754Z",
+    "method": "POST",
+    "resourceType": "xhr",
+    "url": "https://www.facebook.com/ajax/bz?__a=1&__aaid=0&__ccg=GOOD&__dyn=7xe6E5aQ1PyUbFp41twpUnwgU29zE6u7E3rw5ux609vCwjE1EE2Cw8G1Qw5Mx61vw5zwqo1nE1u83mwaS0zK1sw2oEG0xo2ewbS1Lw7Jw5lw8S0rq&__hs=20530.BP%3ADEFAULT.2.0...0&__hsi=7618429454034710945&__req=1&__rev=1035370989&__s=ryo4f6%3Andw8qy%3Asdvy81&__spin_b=trunk&__spin_r=1035370989&__spin_t=1773803833&__user=0&dpr=1&jazoest=22319&lsd=AdR2nHCqiBcv2cXeuX-FMLEohNc",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": true,
+    "relevanceScore": 3,
+    "relevanceReasons": [
+      "url-pattern",
+      "content-type"
+    ]
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:14.968Z",
+    "method": "POST",
+    "resourceType": "xhr",
+    "url": "https://www.facebook.com/ajax/bz?__a=1&__aaid=0&__ccg=GOOD&__dyn=7xe6E5aQ1PyUbFp41twpUnwgU29zE6u7E3rw5ux609vCwjE1EE2Cw8G1Qw5Mx61vw5zwqo1nE1u83mwaS0zK1sw2oEG0xo2ewbS1Lw7Jw5lw8S0rq&__hs=20530.BP%3ADEFAULT.2.0...0&__hsi=7618429454034710945&__req=2&__rev=1035370989&__s=ryo4f6%3Andw8qy%3Asdvy81&__spin_b=trunk&__spin_r=1035370989&__spin_t=1773803833&__user=0&dpr=1&jazoest=22319&lsd=AdR2nHCqiBcv2cXeuX-FMLEohNc"
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:15.069Z",
+    "method": "POST",
+    "resourceType": "xhr",
+    "url": "https://www.facebook.com/ajax/bz?__a=1&__aaid=0&__ccg=GOOD&__dyn=7xe6E5aQ1PyUbFp41twpUnwgU29zE6u7E3rw5ux609vCwjE1EE2Cw8G1Qw5Mx61vw5zwqo1nE1u83mwaS0zK1sw2oEG0xo2ewbS1Lw7Jw5lw8S0rq&__hs=20530.BP%3ADEFAULT.2.0...0&__hsi=7618429454034710945&__req=2&__rev=1035370989&__s=ryo4f6%3Andw8qy%3Asdvy81&__spin_b=trunk&__spin_r=1035370989&__spin_t=1773803833&__user=0&dpr=1&jazoest=22319&lsd=AdR2nHCqiBcv2cXeuX-FMLEohNc",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": true,
+    "relevanceScore": 3,
+    "relevanceReasons": [
+      "url-pattern",
+      "content-type"
+    ]
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:17:15.634Z",
+    "method": "POST",
+    "resourceType": "xhr",
+    "url": "https://www.facebook.com/ajax/bz?__a=1&__aaid=0&__ccg=GOOD&__dyn=7xe6E5aQ1PyUbFp41twpUnwgU29zE6u7E3rw5ux609vCwjE1EE2Cw8G1Qw5Mx61vw5zwqo1nE1u83mwaS0zK1sw2oEG0xo2ewbS1Lw7Jw5lw8S0rq&__hs=20530.BP%3ADEFAULT.2.0...0&__hsi=7618429454034710945&__req=3&__rev=1035370989&__s=ryo4f6%3Andw8qy%3Asdvy81&__spin_b=trunk&__spin_r=1035370989&__spin_t=1773803833&__user=0&dpr=1&jazoest=22319&lsd=AdR2nHCqiBcv2cXeuX-FMLEohNc"
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:17:15.755Z",
+    "method": "POST",
+    "resourceType": "xhr",
+    "url": "https://www.facebook.com/ajax/bz?__a=1&__aaid=0&__ccg=GOOD&__dyn=7xe6E5aQ1PyUbFp41twpUnwgU29zE6u7E3rw5ux609vCwjE1EE2Cw8G1Qw5Mx61vw5zwqo1nE1u83mwaS0zK1sw2oEG0xo2ewbS1Lw7Jw5lw8S0rq&__hs=20530.BP%3ADEFAULT.2.0...0&__hsi=7618429454034710945&__req=3&__rev=1035370989&__s=ryo4f6%3Andw8qy%3Asdvy81&__spin_b=trunk&__spin_r=1035370989&__spin_t=1773803833&__user=0&dpr=1&jazoest=22319&lsd=AdR2nHCqiBcv2cXeuX-FMLEohNc",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": true,
+    "relevanceScore": 3,
+    "relevanceReasons": [
+      "url-pattern",
+      "content-type"
+    ]
+  }
+]

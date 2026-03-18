@@ -1,0 +1,12 @@
+{
+  "capturedAt": "2026-03-18T02:39:26.072Z",
+  "url": "https://www.facebook.com/ajax/bz?__a=1&__aaid=0&__ccg=GOOD&__comet_req=15&__crn=comet.fbweb.CometGroupDiscussionRoute&__hs=20530.HYP%3Acomet_loggedout_pkg.2.1...0&__hsi=7618419700001712757&__req=5&__rev=1035370989&__s=1ksup1%3Anjkcoj%3Au6686a&__spin_b=trunk&__spin_r=1035370989&__spin_t=1773801562&__user=0&dpr=1&jazoest=22236&lsd=AdSBes6CJao1UCzHWAAW6WAijrI&ph=C3&qpl_active_flow_ids=431626709",
+  "method": "POST",
+  "status": 200,
+  "contentType": "application/x-javascript; charset=utf-8",
+  "reasons": [
+    "url-pattern",
+    "content-type"
+  ],
+  "body": "for (;;);{\"__ar\":1,\"rid\":\"A2F6GTLj7uuVpPyiWm5qRfY\",\"payload\":null,\"lid\":\"7618419712344488068\"}"
+}

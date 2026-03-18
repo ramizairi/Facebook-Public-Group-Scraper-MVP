@@ -1,0 +1,525 @@
+[
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:29.784Z",
+    "method": "GET",
+    "resourceType": "document",
+    "url": "https://www.facebook.com/groups/525468629029673/"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:30.199Z",
+    "method": "GET",
+    "resourceType": "document",
+    "url": "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2Fgroups%2F525468629029673%2F"
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:30.198Z",
+    "method": "GET",
+    "resourceType": "document",
+    "url": "https://www.facebook.com/groups/525468629029673/",
+    "status": 302,
+    "bodyReadError": "response.text: Response body is unavailable for redirect responses",
+    "contentType": "text/html; charset=\"utf-8\"",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:30.795Z",
+    "method": "GET",
+    "resourceType": "stylesheet",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v5/yU/l/0,cross/8j35clfDV-rmpFWFuFMNWV7JN9aURAOt-T9DWDYPz6DhfgQe914iiBfONMKn3YhINqU49pVNahkCkvOJ4AbSr5wE.css"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:30.808Z",
+    "method": "POST",
+    "resourceType": "ping",
+    "url": "https://www.facebook.com/ajax/qm/?__a=1&__user=0&__comet_req=15&jazoest=22501"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:30.921Z",
+    "method": "GET",
+    "resourceType": "image",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/yN/r/EAg2TytPR8F.webp"
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:30.735Z",
+    "method": "GET",
+    "resourceType": "document",
+    "url": "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2Fgroups%2F525468629029673%2F",
+    "status": 200,
+    "contentType": "text/html; charset=\"utf-8\"",
+    "relevant": true,
+    "relevanceScore": 3,
+    "relevanceReasons": [
+      "content-type",
+      "body:__bbox"
+    ]
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:30.979Z",
+    "method": "POST",
+    "resourceType": "ping",
+    "url": "https://www.facebook.com/ajax/qm/?__a=1&__user=0&__comet_req=15&jazoest=22501",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:31.005Z",
+    "method": "GET",
+    "resourceType": "stylesheet",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v5/yU/l/0,cross/8j35clfDV-rmpFWFuFMNWV7JN9aURAOt-T9DWDYPz6DhfgQe914iiBfONMKn3YhINqU49pVNahkCkvOJ4AbSr5wE.css",
+    "status": 200,
+    "contentType": "text/css; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:31.162Z",
+    "method": "GET",
+    "resourceType": "image",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/yN/r/EAg2TytPR8F.webp",
+    "status": 200,
+    "contentType": "image/webp",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:31.324Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yN/r/QPG1-_fWQhl.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:31.324Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4i4lW4/yu/l/en_US-j/jL1pVYe37bvufwBbIvyJAwYZEMhVNgUvR4EhwOGIraw9F8xfdoOmWMUiB55BbPSo8dv_kkAv_-wGQ0Tm3rCAOd1QdOnK9aVskw7iM-3juxcHXgs6rJrwPjUc1fAozIMNFBkkw1JtOGoHMq0Th14Xk8e9Sku4yAsukPWHDiX6AV42EQ_iC8lbkhBm8OTgXGs9o1jOpXBHl-lElGzTHLytctlDrzau-DNq4XdKsc9Ol6Gkjq0OVeavkZc4HIHnCJZCcc2ZP1Mq8wypiAW_bfkF94AKekI-DNC1LYw5WWi7I.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:31.324Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4iQnF4/yu/l/en_US-j/HROJSa2EvXO.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:31.326Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4iYeD4/y0/l/en_US-j/i4n1r5G7OUV.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:31.326Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4iFTB4/yE/l/en_US-j/GL5TaJgPD7cVKCRAPxXzhzTd69nbsxsOvWJukooR-9NvVM7roSoCQTiBJB4aoPMFASRi7mWBMSxEc35-o6nj_haOPq6t1wY9IZRVIPNHOqVL96UfxHcaC_j664g7ju7MQP2lLAAXUtRnPF5.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:31.326Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4iZBp4/yb/l/en_US-j/aTvLpEMiMqYV15tj8h63LNACrQagSh9ONa-9ML_Y_MRXozoFpj-99G3ziu8fjvIasuvR63MZf19Ju-Qx8lcabVTDI3XLoYQF64vO2zT06LS1itQWShO2h-PYdZEoStQUE_H7TvtL32s_6TN5GUvR7zmf91bYZLjz85TBvoXroJ7K59X9C3AwQd1t3qNKef6G-hKocd89O_LiCUWDnXRwDHCkV8R1onn-JtdZ7PJHmTeYzr6srgrsOfCedTPWKCFM-z_0Q2ncZTFDSp4bWABAdmh5DEndjkNh9-DZBIN8jKeHWrECl3_n5Wu6jBGHRQaSS1OrajkDar.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:31.326Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4iU7G4/yS/l/en_US-j/ZHzAgzvfUJm.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:31.326Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4i1NA4/yq/l/en_US-j/D4j8mQh5_J9.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:31.326Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4iACe4/y5/l/en_US-j/beDdTzPbFB8.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:31.326Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4ibYN4/yi/l/en_US-j/_ANXZ_HqwLF.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:31.326Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4ieWN4/yV/l/en_US-j/YnKRAjxLc03SgARw-dZ4_LzhK17QCJvRTw4dCbpdGE_efpmNkM4GO8yrruBGGEYFdGH21Qd9wECYQQq7W0a5YQ-OhLDgDFsBW0WAdF4Q4yS3Q5fV3SJPC7OjN9V3TtN2HhP5zqwyvp6q7nPm7jIGEKxx_6xvyfVWAYRn5kHM2TrHr72zDgSMvJz0tUr775NzKCi2Sch9boWyHYdnzATCB6ghfjDQ.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:31.326Z",
+    "method": "GET",
+    "resourceType": "stylesheet",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v5/y7/l/0,cross/TXMM9q9T0nEg8T_6-Yirbb.css"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:31.341Z",
+    "method": "GET",
+    "resourceType": "font",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/yl/r/9AJbVCy4-G1.woff2"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:31.341Z",
+    "method": "GET",
+    "resourceType": "font",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/yQ/r/-pkMfchyeAZ.woff2"
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:31.412Z",
+    "method": "GET",
+    "resourceType": "stylesheet",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v5/y7/l/0,cross/TXMM9q9T0nEg8T_6-Yirbb.css",
+    "status": 200,
+    "contentType": "text/css; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:31.474Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4iZBp4/yb/l/en_US-j/aTvLpEMiMqYV15tj8h63LNACrQagSh9ONa-9ML_Y_MRXozoFpj-99G3ziu8fjvIasuvR63MZf19Ju-Qx8lcabVTDI3XLoYQF64vO2zT06LS1itQWShO2h-PYdZEoStQUE_H7TvtL32s_6TN5GUvR7zmf91bYZLjz85TBvoXroJ7K59X9C3AwQd1t3qNKef6G-hKocd89O_LiCUWDnXRwDHCkV8R1onn-JtdZ7PJHmTeYzr6srgrsOfCedTPWKCFM-z_0Q2ncZTFDSp4bWABAdmh5DEndjkNh9-DZBIN8jKeHWrECl3_n5Wu6jBGHRQaSS1OrajkDar.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:31.514Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4ibYN4/yi/l/en_US-j/_ANXZ_HqwLF.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:31.535Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4i1NA4/yq/l/en_US-j/D4j8mQh5_J9.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:31.563Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4ieWN4/yV/l/en_US-j/YnKRAjxLc03SgARw-dZ4_LzhK17QCJvRTw4dCbpdGE_efpmNkM4GO8yrruBGGEYFdGH21Qd9wECYQQq7W0a5YQ-OhLDgDFsBW0WAdF4Q4yS3Q5fV3SJPC7OjN9V3TtN2HhP5zqwyvp6q7nPm7jIGEKxx_6xvyfVWAYRn5kHM2TrHr72zDgSMvJz0tUr775NzKCi2Sch9boWyHYdnzATCB6ghfjDQ.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:31.564Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4iU7G4/yS/l/en_US-j/ZHzAgzvfUJm.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:31.579Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yN/r/QPG1-_fWQhl.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:31.593Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4iACe4/y5/l/en_US-j/beDdTzPbFB8.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:31.607Z",
+    "method": "GET",
+    "resourceType": "font",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/yl/r/9AJbVCy4-G1.woff2",
+    "status": 200,
+    "contentType": "font/woff2",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:31.617Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4iYeD4/y0/l/en_US-j/i4n1r5G7OUV.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:31.618Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4iQnF4/yu/l/en_US-j/HROJSa2EvXO.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:31.618Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4iFTB4/yE/l/en_US-j/GL5TaJgPD7cVKCRAPxXzhzTd69nbsxsOvWJukooR-9NvVM7roSoCQTiBJB4aoPMFASRi7mWBMSxEc35-o6nj_haOPq6t1wY9IZRVIPNHOqVL96UfxHcaC_j664g7ju7MQP2lLAAXUtRnPF5.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:31.621Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4i4lW4/yu/l/en_US-j/jL1pVYe37bvufwBbIvyJAwYZEMhVNgUvR4EhwOGIraw9F8xfdoOmWMUiB55BbPSo8dv_kkAv_-wGQ0Tm3rCAOd1QdOnK9aVskw7iM-3juxcHXgs6rJrwPjUc1fAozIMNFBkkw1JtOGoHMq0Th14Xk8e9Sku4yAsukPWHDiX6AV42EQ_iC8lbkhBm8OTgXGs9o1jOpXBHl-lElGzTHLytctlDrzau-DNq4XdKsc9Ol6Gkjq0OVeavkZc4HIHnCJZCcc2ZP1Mq8wypiAW_bfkF94AKekI-DNC1LYw5WWi7I.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:31.666Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4ilwa4/yP/l/en_US-j/O0af81LTBa2.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:31.666Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yw/r/W47Bc4pyIK8.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:31.666Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yQ/r/phhshD5-sc1.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:31.666Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yU/r/DcrX2w7W64E.js"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:31.696Z",
+    "method": "GET",
+    "resourceType": "xhr",
+    "url": "https://www.instagram.com/accounts/xuserid/"
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:31.740Z",
+    "method": "GET",
+    "resourceType": "image",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/yb/r/HpEiFYDux5j.webp"
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:31.757Z",
+    "method": "GET",
+    "resourceType": "font",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/yQ/r/-pkMfchyeAZ.woff2",
+    "status": 200,
+    "contentType": "font/woff2",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:31.775Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yQ/r/phhshD5-sc1.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:31.775Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yw/r/W47Bc4pyIK8.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:31.778Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4ilwa4/yP/l/en_US-j/O0af81LTBa2.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:31.796Z",
+    "method": "POST",
+    "resourceType": "xhr",
+    "url": "https://www.facebook.com/ajax/bz?__a=1&__aaid=0&__ccg=GOOD&__comet_req=15&__hs=20530.HYP%3Acomet_loggedout_pkg.2.1...0&__hsi=7618426950008660575&__req=1&__rev=1035370989&__s=so2xtd%3A1kbv3f%3Ad9oxzn&__spin_b=trunk&__spin_r=1035370989&__spin_t=1773803250&__user=0&dpr=1&jazoest=22501&lsd=AdR3Uxt5sNri5ZivJmcqEys9pqE&ph=C3&qpl_active_flow_ids=175125627"
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:31.811Z",
+    "method": "GET",
+    "resourceType": "image",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/yb/r/HpEiFYDux5j.webp",
+    "status": 200,
+    "contentType": "image/webp",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:31.827Z",
+    "method": "GET",
+    "resourceType": "script",
+    "url": "https://static.xx.fbcdn.net/rsrc.php/v4/yU/r/DcrX2w7W64E.js",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:31.949Z",
+    "method": "POST",
+    "resourceType": "xhr",
+    "url": "https://www.facebook.com/ajax/bz?__a=1&__aaid=0&__ccg=GOOD&__comet_req=15&__hs=20530.HYP%3Acomet_loggedout_pkg.2.1...0&__hsi=7618426950008660575&__req=1&__rev=1035370989&__s=so2xtd%3A1kbv3f%3Ad9oxzn&__spin_b=trunk&__spin_r=1035370989&__spin_t=1773803250&__user=0&dpr=1&jazoest=22501&lsd=AdR3Uxt5sNri5ZivJmcqEys9pqE&ph=C3&qpl_active_flow_ids=175125627",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": true,
+    "relevanceScore": 3,
+    "relevanceReasons": [
+      "url-pattern",
+      "content-type"
+    ]
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:32.043Z",
+    "method": "GET",
+    "resourceType": "xhr",
+    "url": "https://www.instagram.com/accounts/xuserid/",
+    "status": 200,
+    "contentType": "text/javascript; charset=utf-8",
+    "relevant": false,
+    "relevanceScore": 0,
+    "relevanceReasons": []
+  },
+  {
+    "type": "request",
+    "at": "2026-03-18T03:07:32.674Z",
+    "method": "POST",
+    "resourceType": "xhr",
+    "url": "https://www.facebook.com/ajax/bz?__a=1&__aaid=0&__ccg=GOOD&__comet_req=15&__hs=20530.HYP%3Acomet_loggedout_pkg.2.1...0&__hsi=7618426950008660575&__req=2&__rev=1035370989&__s=so2xtd%3A1kbv3f%3Ad9oxzn&__spin_b=trunk&__spin_r=1035370989&__spin_t=1773803250&__user=0&dpr=1&jazoest=22501&lsd=AdR3Uxt5sNri5ZivJmcqEys9pqE&ph=C3"
+  },
+  {
+    "type": "response",
+    "at": "2026-03-18T03:07:33.602Z",
+    "method": "POST",
+    "resourceType": "xhr",
+    "url": "https://www.facebook.com/ajax/bz?__a=1&__aaid=0&__ccg=GOOD&__comet_req=15&__hs=20530.HYP%3Acomet_loggedout_pkg.2.1...0&__hsi=7618426950008660575&__req=2&__rev=1035370989&__s=so2xtd%3A1kbv3f%3Ad9oxzn&__spin_b=trunk&__spin_r=1035370989&__spin_t=1773803250&__user=0&dpr=1&jazoest=22501&lsd=AdR3Uxt5sNri5ZivJmcqEys9pqE&ph=C3",
+    "status": 200,
+    "contentType": "application/x-javascript; charset=utf-8",
+    "relevant": true,
+    "relevanceScore": 3,
+    "relevanceReasons": [
+      "url-pattern",
+      "content-type"
+    ]
+  }
+]

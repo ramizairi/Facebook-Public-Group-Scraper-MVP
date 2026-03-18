@@ -1,0 +1,5 @@
+node_modules/
+output/
+artifacts/
+.env
+npm-debug.log*

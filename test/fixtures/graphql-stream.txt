@@ -1,0 +1,2 @@
+{"data":{"node":{"group_feed":{"edges":[{"node":{"post_id":"333333333333333","url":"https://www.facebook.com/groups/123456789012345/permalink/333333333333333/","actors":[{"name":"Stream Example","id":"user-1"}],"message":{"text":"Streamed payload post"},"creation_time":1710000000,"feedback":{"reaction_count":{"count":9},"share_count":{"count":2},"comment_rendering_instance":{"comments":{"total_count":5}}},"target_group":{"id":"123456789012345"}}}]}}}}
+{"label":"GroupsCometFeedRegularStories_group_feed$page_info","data":{"page_info":{"has_next_page":true}}}

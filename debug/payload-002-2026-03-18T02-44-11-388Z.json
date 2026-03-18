@@ -1,0 +1,12 @@
+{
+  "capturedAt": "2026-03-18T02:44:10.009Z",
+  "url": "https://www.facebook.com/ajax/bz?__a=1&__aaid=0&__ccg=GOOD&__comet_req=15&__hs=20530.HYP%3Acomet_loggedout_pkg.2.1...0&__hsi=7618420926904037266&__req=1&__rev=1035370989&__s=8k0369%3Ao6jjwt%3Atsv7i8&__spin_b=trunk&__spin_r=1035370989&__spin_t=1773801848&__user=0&dpr=1&jazoest=22235&lsd=AdTz5X0BKova-7i2CziZ96n6Gpo&ph=C3&qpl_active_flow_ids=175125627",
+  "method": "POST",
+  "status": 200,
+  "contentType": "application/x-javascript; charset=utf-8",
+  "reasons": [
+    "url-pattern",
+    "content-type"
+  ],
+  "body": "for (;;);{\"__ar\":1,\"rid\":\"AvGUdagDP0X9IPJiNmp4C3v\",\"payload\":null,\"lid\":\"7618420932049901502\"}"
+}

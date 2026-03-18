@@ -1,0 +1,20 @@
+{
+  "startedAt": "2026-03-18T03:31:35.089Z",
+  "elapsedMs": 10334,
+  "elapsedHuman": "10s",
+  "uniquePosts": 20,
+  "postsPerMinute": 116.12,
+  "totalRequests": 115,
+  "totalResponses": 126,
+  "relevantResponses": 30,
+  "requestFailures": 0,
+  "retries": 0,
+  "failures": 0,
+  "sourceBreakdown": {
+    "network": 19,
+    "dom": 1
+  },
+  "lastSource": "dom",
+  "cycles": 2,
+  "seededPosts": 0
+}

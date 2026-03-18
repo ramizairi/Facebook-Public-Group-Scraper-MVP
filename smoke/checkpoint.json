@@ -1,0 +1,632 @@
+{
+  "version": 1,
+  "savedAt": "2026-03-18T03:31:45.424Z",
+  "groupUrl": "https://www.facebook.com/groups/525468629029673/",
+  "outputDir": "/home/rami/Desktop/facebook-groupes-scrapper/smoke",
+  "posts": [
+    {
+      "id": "1413653663544494",
+      "url": "https://www.facebook.com/groups/525468629029673/permalink/1413653663544494/",
+      "groupUrl": "https://www.facebook.com/groups/525468629029673/",
+      "authorName": "Ussie Covoiturage",
+      "authorId": "61581854302350",
+      "createdAt": "2026-01-05T11:23:27.000Z",
+      "text": null,
+      "media": [],
+      "reactionCount": 0,
+      "commentCount": 0,
+      "shareCount": null,
+      "sourceType": "network",
+      "rawFragment": {
+        "source": "document-embedded-json",
+        "reference": "1413653663544494:document-embedded-json",
+        "sourceUrl": "https://www.facebook.com/groups/525468629029673/",
+        "keys": [
+          "encrypted_tracking",
+          "viewability_config",
+          "client_view_config",
+          "url",
+          "comet_sections",
+          "feedback",
+          "id"
+        ]
+      }
+    },
+    {
+      "id": "1471550821088111",
+      "url": "https://www.facebook.com/groups/525468629029673/posts/1471550821088111/",
+      "groupUrl": "https://www.facebook.com/groups/525468629029673/",
+      "authorName": "Ahmed Ab",
+      "authorId": "pfbid0K72TN6XCtRxUEpdMEkq9vSQaNyUaQED86F7Hox3vdRnMj3atPpJMeiNaf4yYiKW7l",
+      "createdAt": "2026-03-18T03:28:50.000Z",
+      "text": "De Sousse à Tunis 10h Cot 15dt",
+      "media": [],
+      "reactionCount": 0,
+      "commentCount": 0,
+      "shareCount": null,
+      "sourceType": "network",
+      "rawFragment": {
+        "source": "document-embedded-json",
+        "reference": "1471550821088111:document-embedded-json",
+        "sourceUrl": "https://www.facebook.com/groups/525468629029673/",
+        "keys": [
+          "__typename",
+          "__isFeedUnit",
+          "__isCacheable",
+          "cache_id",
+          "debug_info",
+          "id",
+          "sponsored_data",
+          "feedback",
+          "is_story_civic",
+          "attachments",
+          "matched_terms",
+          "post_id"
+        ]
+      }
+    },
+    {
+      "id": "1471543827755477",
+      "url": "https://www.facebook.com/groups/525468629029673/posts/1471543827755477/",
+      "groupUrl": "https://www.facebook.com/groups/525468629029673/",
+      "authorName": "Yessine🧑‍✈️",
+      "authorId": "2402227710270084",
+      "createdAt": "2026-03-18T03:13:56.000Z",
+      "text": "Reste une place disponible de Sousse vers Tunis à 5h15 du matin Tel ou WhatsApp: 95722201",
+      "media": [],
+      "reactionCount": 0,
+      "commentCount": 0,
+      "shareCount": null,
+      "sourceType": "network",
+      "rawFragment": {
+        "source": "network-response",
+        "reference": "1471543827755477:network-response",
+        "sourceUrl": "https://www.facebook.com/api/graphql/",
+        "keys": [
+          "__typename",
+          "__isFeedUnit",
+          "__isCacheable",
+          "cache_id",
+          "debug_info",
+          "id",
+          "sponsored_data",
+          "feedback",
+          "is_story_civic",
+          "attachments",
+          "matched_terms",
+          "post_id"
+        ]
+      }
+    },
+    {
+      "id": "1471418597768000",
+      "url": "https://www.facebook.com/groups/525468629029673/posts/1471418597768000/",
+      "groupUrl": "https://www.facebook.com/groups/525468629029673/",
+      "authorName": "دلولة دلال",
+      "authorId": "pfbid02uUDdTmHm8PaCehrVKVJ4jKLZQ1o5WrAD6c9gjPP3CiEsNjF226GkqyQCmFcLz9kQl",
+      "createdAt": "2026-03-17T22:41:26.000Z",
+      "text": "Je cherche 2 place Sousse tunis demain",
+      "media": [],
+      "reactionCount": 8,
+      "commentCount": 8,
+      "shareCount": null,
+      "sourceType": "network",
+      "rawFragment": {
+        "source": "network-response",
+        "reference": "1471418597768000:network-response",
+        "sourceUrl": "https://www.facebook.com/api/graphql/",
+        "keys": [
+          "__typename",
+          "__isFeedUnit",
+          "__isCacheable",
+          "cache_id",
+          "debug_info",
+          "id",
+          "sponsored_data",
+          "feedback",
+          "is_story_civic",
+          "attachments",
+          "matched_terms",
+          "post_id"
+        ]
+      }
+    },
+    {
+      "id": "1471419574434569",
+      "url": "https://www.facebook.com/groups/525468629029673/posts/1471419574434569/",
+      "groupUrl": "https://www.facebook.com/groups/525468629029673/",
+      "authorName": null,
+      "authorId": null,
+      "createdAt": null,
+      "text": null,
+      "media": [],
+      "reactionCount": null,
+      "commentCount": null,
+      "shareCount": null,
+      "sourceType": "network",
+      "rawFragment": {
+        "source": "network-response",
+        "reference": "1471419574434569:network-response",
+        "sourceUrl": "https://www.facebook.com/api/graphql/",
+        "keys": [
+          "__typename",
+          "group_id",
+          "post_id",
+          "__module_operation_useCometUFIComposerPlugins_feedback",
+          "__module_component_useCometUFIComposerPlugins_feedback"
+        ]
+      }
+    },
+    {
+      "id": "1471462684430258",
+      "url": "https://www.facebook.com/groups/525468629029673/posts/1471462684430258/",
+      "groupUrl": "https://www.facebook.com/groups/525468629029673/",
+      "authorName": null,
+      "authorId": null,
+      "createdAt": null,
+      "text": null,
+      "media": [],
+      "reactionCount": null,
+      "commentCount": null,
+      "shareCount": null,
+      "sourceType": "network",
+      "rawFragment": {
+        "source": "network-response",
+        "reference": "1471462684430258:network-response",
+        "sourceUrl": "https://www.facebook.com/api/graphql/",
+        "keys": [
+          "__typename",
+          "group_id",
+          "post_id",
+          "__module_operation_useCometUFIComposerPlugins_feedback",
+          "__module_component_useCometUFIComposerPlugins_feedback"
+        ]
+      }
+    },
+    {
+      "id": "1471484424428084",
+      "url": "https://www.facebook.com/groups/525468629029673/posts/1471484424428084/",
+      "groupUrl": "https://www.facebook.com/groups/525468629029673/",
+      "authorName": "Safa Chagma",
+      "authorId": "pfbid0PsKwrr11fTLviSrVeuZ8sXi3U8yfHkVUAuRVWgFDDZcLF2DkVZb2ytwSqLAH67r3l",
+      "createdAt": "2026-03-18T01:12:01.000Z",
+      "text": "Je cherche deux place demain de hammam sousse vers beb saadoun 11:30h",
+      "media": [],
+      "reactionCount": 1,
+      "commentCount": 1,
+      "shareCount": null,
+      "sourceType": "network",
+      "rawFragment": {
+        "source": "network-response",
+        "reference": "1471484424428084:network-response",
+        "sourceUrl": "https://www.facebook.com/api/graphql/",
+        "keys": [
+          "__typename",
+          "__isFeedUnit",
+          "__isCacheable",
+          "cache_id",
+          "debug_info",
+          "id",
+          "sponsored_data",
+          "feedback",
+          "is_story_civic",
+          "attachments",
+          "matched_terms",
+          "post_id"
+        ]
+      }
+    },
+    {
+      "id": "1471520434424483",
+      "url": "https://www.facebook.com/groups/525468629029673/posts/1471520434424483/",
+      "groupUrl": "https://www.facebook.com/groups/525468629029673/",
+      "authorName": null,
+      "authorId": null,
+      "createdAt": null,
+      "text": null,
+      "media": [],
+      "reactionCount": null,
+      "commentCount": null,
+      "shareCount": null,
+      "sourceType": "network",
+      "rawFragment": {
+        "source": "network-response",
+        "reference": "1471520434424483:network-response",
+        "sourceUrl": "https://www.facebook.com/api/graphql/",
+        "keys": [
+          "__typename",
+          "group_id",
+          "post_id",
+          "__module_operation_useCometUFIComposerPlugins_feedback",
+          "__module_component_useCometUFIComposerPlugins_feedback"
+        ]
+      }
+    },
+    {
+      "id": "1471429921100201",
+      "url": "https://www.facebook.com/groups/525468629029673/posts/1471429921100201/",
+      "groupUrl": "https://www.facebook.com/groups/525468629029673/",
+      "authorName": "Souhaiel Blaiech",
+      "authorId": "pfbid02ErKVaHKG7F6z57WwrHcKdZvTcA8BjSgT6nML8YbpQDjv7vmcHvVCc8xxRZjYGw9el",
+      "createdAt": "2026-03-17T23:08:09.000Z",
+      "text": "2 places disponibles demain matin 7h30 de tunis vers sousse",
+      "media": [],
+      "reactionCount": 1,
+      "commentCount": 1,
+      "shareCount": null,
+      "sourceType": "network",
+      "rawFragment": {
+        "source": "network-response",
+        "reference": "1471429921100201:network-response",
+        "sourceUrl": "https://www.facebook.com/api/graphql/",
+        "keys": [
+          "__typename",
+          "__isFeedUnit",
+          "__isCacheable",
+          "cache_id",
+          "debug_info",
+          "id",
+          "sponsored_data",
+          "feedback",
+          "is_story_civic",
+          "attachments",
+          "matched_terms",
+          "post_id"
+        ]
+      }
+    },
+    {
+      "id": "1471517034424823",
+      "url": "https://www.facebook.com/groups/525468629029673/posts/1471517034424823/",
+      "groupUrl": "https://www.facebook.com/groups/525468629029673/",
+      "authorName": null,
+      "authorId": null,
+      "createdAt": null,
+      "text": null,
+      "media": [],
+      "reactionCount": null,
+      "commentCount": null,
+      "shareCount": null,
+      "sourceType": "network",
+      "rawFragment": {
+        "source": "network-response",
+        "reference": "1471517034424823:network-response",
+        "sourceUrl": "https://www.facebook.com/api/graphql/",
+        "keys": [
+          "__typename",
+          "group_id",
+          "post_id",
+          "__module_operation_useCometUFIComposerPlugins_feedback",
+          "__module_component_useCometUFIComposerPlugins_feedback"
+        ]
+      }
+    },
+    {
+      "id": "1471451837764676",
+      "url": "https://www.facebook.com/groups/525468629029673/posts/1471451837764676/",
+      "groupUrl": "https://www.facebook.com/groups/525468629029673/",
+      "authorName": "Anonymous participant",
+      "authorId": "1416602659728159",
+      "createdAt": "2026-03-17T23:59:25.000Z",
+      "text": "3 places disponibles Tunis —> Sousse Demain 7h30 Sans bagages",
+      "media": [],
+      "reactionCount": 1,
+      "commentCount": 1,
+      "shareCount": null,
+      "sourceType": "network",
+      "rawFragment": {
+        "source": "network-response",
+        "reference": "1471451837764676:network-response",
+        "sourceUrl": "https://www.facebook.com/api/graphql/",
+        "keys": [
+          "__typename",
+          "__isFeedUnit",
+          "__isCacheable",
+          "cache_id",
+          "debug_info",
+          "id",
+          "sponsored_data",
+          "feedback",
+          "is_story_civic",
+          "attachments",
+          "matched_terms",
+          "post_id"
+        ]
+      }
+    },
+    {
+      "id": "1471516551091538",
+      "url": "https://www.facebook.com/groups/525468629029673/posts/1471516551091538/",
+      "groupUrl": "https://www.facebook.com/groups/525468629029673/",
+      "authorName": null,
+      "authorId": null,
+      "createdAt": null,
+      "text": null,
+      "media": [],
+      "reactionCount": null,
+      "commentCount": null,
+      "shareCount": null,
+      "sourceType": "network",
+      "rawFragment": {
+        "source": "network-response",
+        "reference": "1471516551091538:network-response",
+        "sourceUrl": "https://www.facebook.com/api/graphql/",
+        "keys": [
+          "__typename",
+          "group_id",
+          "post_id",
+          "__module_operation_useCometUFIComposerPlugins_feedback",
+          "__module_component_useCometUFIComposerPlugins_feedback"
+        ]
+      }
+    },
+    {
+      "id": "1471501554426371",
+      "url": "https://www.facebook.com/groups/525468629029673/posts/1471501554426371/",
+      "groupUrl": "https://www.facebook.com/groups/525468629029673/",
+      "authorName": "Iheb Imo",
+      "authorId": "pfbid0tjJMVLaViGnzdJoJyQRnNG7XGmugBbPcpQDBKq97TriBcgvKEQpMZgknHJon4gLDl",
+      "createdAt": "2026-03-18T01:45:57.000Z",
+      "text": "3 places disponibles 14h30 Sousse=====>tunis ☎️96272477☎️",
+      "media": [],
+      "reactionCount": 0,
+      "commentCount": 0,
+      "shareCount": null,
+      "sourceType": "network",
+      "rawFragment": {
+        "source": "network-response",
+        "reference": "1471501554426371:network-response",
+        "sourceUrl": "https://www.facebook.com/api/graphql/",
+        "keys": [
+          "__typename",
+          "__isFeedUnit",
+          "__isCacheable",
+          "cache_id",
+          "debug_info",
+          "id",
+          "sponsored_data",
+          "feedback",
+          "is_story_civic",
+          "attachments",
+          "matched_terms",
+          "post_id"
+        ]
+      }
+    },
+    {
+      "id": "1471496744426852",
+      "url": "https://www.facebook.com/groups/525468629029673/posts/1471496744426852/",
+      "groupUrl": "https://www.facebook.com/groups/525468629029673/",
+      "authorName": "Anonymous participant",
+      "authorId": "939389005310930",
+      "createdAt": "2026-03-18T01:36:04.000Z",
+      "text": "Je cherche une place de tunis c.v vers sousse demain le mercredi 18 mars à partir de 14:30 (Pour fille)",
+      "media": [],
+      "reactionCount": 0,
+      "commentCount": 0,
+      "shareCount": null,
+      "sourceType": "network",
+      "rawFragment": {
+        "source": "network-response",
+        "reference": "1471496744426852:network-response",
+        "sourceUrl": "https://www.facebook.com/api/graphql/",
+        "keys": [
+          "__typename",
+          "__isFeedUnit",
+          "__isCacheable",
+          "cache_id",
+          "debug_info",
+          "id",
+          "sponsored_data",
+          "feedback",
+          "is_story_civic",
+          "attachments",
+          "matched_terms",
+          "post_id"
+        ]
+      }
+    },
+    {
+      "id": "1471480647761795",
+      "url": "https://www.facebook.com/groups/525468629029673/posts/1471480647761795/",
+      "groupUrl": "https://www.facebook.com/groups/525468629029673/",
+      "authorName": "Sar Ourä",
+      "authorId": "pfbid0MdobrUtJchAxUBUSm67auKjwSAT6azNWAuB4T6PaP7aVRZ64wn1w9EMU3VNxaZPvl",
+      "createdAt": "2026-03-18T01:03:35.000Z",
+      "text": "Asslemaa je cherche une place de Monastir ou Sousse à Tunis dès 16h:30 j'ai une valise 18/3",
+      "media": [],
+      "reactionCount": 0,
+      "commentCount": 0,
+      "shareCount": null,
+      "sourceType": "network",
+      "rawFragment": {
+        "source": "network-response",
+        "reference": "1471480647761795:network-response",
+        "sourceUrl": "https://www.facebook.com/api/graphql/",
+        "keys": [
+          "__typename",
+          "__isFeedUnit",
+          "__isCacheable",
+          "cache_id",
+          "debug_info",
+          "id",
+          "sponsored_data",
+          "feedback",
+          "is_story_civic",
+          "attachments",
+          "matched_terms",
+          "post_id"
+        ]
+      }
+    },
+    {
+      "id": "1471476004428926",
+      "url": "https://www.facebook.com/groups/525468629029673/posts/1471476004428926/",
+      "groupUrl": "https://www.facebook.com/groups/525468629029673/",
+      "authorName": "Anonymous participant",
+      "authorId": "870387876051423",
+      "createdAt": "2026-03-18T00:53:13.000Z",
+      "text": "Une place dispo de Tunis cv à sousse-monastir à 13:30 Pour fille ( bagage léger svp😊)",
+      "media": [],
+      "reactionCount": 1,
+      "commentCount": 1,
+      "shareCount": null,
+      "sourceType": "network",
+      "rawFragment": {
+        "source": "network-response",
+        "reference": "1471476004428926:network-response",
+        "sourceUrl": "https://www.facebook.com/api/graphql/",
+        "keys": [
+          "__typename",
+          "__isFeedUnit",
+          "__isCacheable",
+          "cache_id",
+          "debug_info",
+          "id",
+          "sponsored_data",
+          "feedback",
+          "is_story_civic",
+          "attachments",
+          "matched_terms",
+          "post_id"
+        ]
+      }
+    },
+    {
+      "id": "1471478174428709",
+      "url": "https://www.facebook.com/groups/525468629029673/posts/1471478174428709/",
+      "groupUrl": "https://www.facebook.com/groups/525468629029673/",
+      "authorName": null,
+      "authorId": null,
+      "createdAt": null,
+      "text": null,
+      "media": [],
+      "reactionCount": null,
+      "commentCount": null,
+      "shareCount": null,
+      "sourceType": "network",
+      "rawFragment": {
+        "source": "network-response",
+        "reference": "1471478174428709:network-response",
+        "sourceUrl": "https://www.facebook.com/api/graphql/",
+        "keys": [
+          "__typename",
+          "group_id",
+          "post_id",
+          "__module_operation_useCometUFIComposerPlugins_feedback",
+          "__module_component_useCometUFIComposerPlugins_feedback"
+        ]
+      }
+    },
+    {
+      "id": "1471476277762232",
+      "url": "https://www.facebook.com/groups/525468629029673/posts/1471476277762232/",
+      "groupUrl": "https://www.facebook.com/groups/525468629029673/",
+      "authorName": "Mohamed Bou",
+      "authorId": "pfbid0TScCzGr9sKzBkQAxjez395BxfqkVEakNgbtSt3oKEG2zHfp6nqjKruun7TEGrZnkl",
+      "createdAt": "2026-03-18T00:53:54.000Z",
+      "text": "3 place disponible sousse sahloul vers tunis depart 9:00 mum 29568464",
+      "media": [],
+      "reactionCount": 0,
+      "commentCount": 0,
+      "shareCount": null,
+      "sourceType": "network",
+      "rawFragment": {
+        "source": "network-response",
+        "reference": "1471476277762232:network-response",
+        "sourceUrl": "https://www.facebook.com/api/graphql/",
+        "keys": [
+          "__typename",
+          "__isFeedUnit",
+          "__isCacheable",
+          "cache_id",
+          "debug_info",
+          "id",
+          "sponsored_data",
+          "feedback",
+          "is_story_civic",
+          "attachments",
+          "matched_terms",
+          "post_id"
+        ]
+      }
+    },
+    {
+      "id": "1471473817762478",
+      "url": "https://www.facebook.com/groups/525468629029673/posts/1471473817762478/",
+      "groupUrl": "https://www.facebook.com/groups/525468629029673/",
+      "authorName": "Anonymous participant",
+      "authorId": "1469559274826818",
+      "createdAt": "2026-03-18T00:48:17.000Z",
+      "text": "2 places disponibles de sousse vers Tunis (cv/carthage) À partir de 14h30",
+      "media": [],
+      "reactionCount": 0,
+      "commentCount": 0,
+      "shareCount": null,
+      "sourceType": "network",
+      "rawFragment": {
+        "source": "network-response",
+        "reference": "1471473817762478:network-response",
+        "sourceUrl": "https://www.facebook.com/api/graphql/",
+        "keys": [
+          "__typename",
+          "__isFeedUnit",
+          "__isCacheable",
+          "cache_id",
+          "debug_info",
+          "id",
+          "sponsored_data",
+          "feedback",
+          "is_story_civic",
+          "attachments",
+          "matched_terms",
+          "post_id"
+        ]
+      }
+    },
+    {
+      "id": "1471501427759717",
+      "url": "https://www.facebook.com/groups/525468629029673/posts/1471501427759717/",
+      "groupUrl": "https://www.facebook.com/groups/525468629029673/",
+      "authorName": "Iheb Imo",
+      "authorId": null,
+      "createdAt": null,
+      "text": null,
+      "media": [
+        {
+          "type": "image",
+          "url": "https://static.xx.fbcdn.net/images/emoji.php/v9/tea/1/30/260e.png"
+        }
+      ],
+      "reactionCount": null,
+      "commentCount": null,
+      "shareCount": null,
+      "sourceType": "dom",
+      "rawFragment": {
+        "source": "dom-fallback",
+        "reference": "article:12",
+        "textPreview": "Iheb Imo1h · Shared with Public group3 places disponibles 14h30Sousse=====>tunis962724773 places disponibles 14h30Sousse=====>tunis96272477LikeCommentShare"
+      }
+    }
+  ],
+  "stats": {
+    "startedAt": "2026-03-18T03:31:35.089Z",
+    "elapsedMs": 10334,
+    "elapsedHuman": "10s",
+    "uniquePosts": 20,
+    "postsPerMinute": 116.12,
+    "totalRequests": 115,
+    "totalResponses": 126,
+    "relevantResponses": 30,
+    "requestFailures": 0,
+    "retries": 0,
+    "failures": 0,
+    "sourceBreakdown": {
+      "network": 19,
+      "dom": 1
+    },
+    "lastSource": "dom",
+    "cycles": 2,
+    "seededPosts": 0
+  }
+}

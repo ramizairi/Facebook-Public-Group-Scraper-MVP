@@ -1,0 +1,20 @@
+{
+  "name": "facebook-public-group-scraper",
+  "version": "0.1.0",
+  "description": "Browser-backed Facebook public group scraper MVP using Playwright and network-first extraction.",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "pino": "^10.3.1",
+    "playwright": "^1.58.2",
+    "zod": "^4.3.6"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "label": "blocked-initial",
+  "capturedAt": "2026-03-18T03:07:34.329Z",
+  "blocked": true,
+  "reason": "facebook-login-wall",
+  "snapshot": {
+    "url": "https://www.facebook.com/login/?next=https%3A%2F%2Fwww.facebook.com%2Fgroups%2F525468629029673%2F",
+    "title": "Facebook",
+    "bodyText": "Explore the things you love. Log into Facebook Email or mobile number Password Log in Forgot password? Create new account English (US) Français (France) العربية Italiano Deutsch Español Русский More languages… Sign Up Log In Messenger Facebook Lite Video Meta Pay Meta Store Meta Quest Ray-Ban Meta Meta AI Instagram Threads Privacy Policy Privacy Center About Create ad Create Page Developers Careers Cookies Ad choices Terms Help Contact Uploading & Non-Users Meta © 2026",
+    "hasFeed": false,
+    "visiblePostLinks": 0
+  }
+}
