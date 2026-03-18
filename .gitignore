@@ -2,6 +2,7 @@ node_modules/
 /output/
 /artifacts/
 /.env
+/proxy/
 npm-debug.log*
 !src/output/
 !src/output/**

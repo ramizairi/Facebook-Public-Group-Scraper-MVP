@@ -1,8 +1,11 @@
 import { closeBrowserSession, launchBrowserSession } from "./session.js";
+import { ProxyPool } from "./proxy-pool.js";
 import { safeJsonParse } from "../utils/safe-json.js";
 
 export async function runProxyTest(config, outputManager, logger) {
-  const session = await launchBrowserSession(config, logger);
+  const proxyPool = await ProxyPool.create(config, logger);
+  const selectedProxy = proxyPool?.acquire({ reason: "proxy-test" }) ?? config.proxy;
+  const session = await launchBrowserSession(config, logger, selectedProxy);
 
   try {
     const response = await session.page.goto(config.proxyTestUrl, {
@@ -19,7 +22,7 @@ export async function runProxyTest(config, outputManager, logger) {
       ok: Boolean(response?.ok()),
       status: response?.status() ?? null,
       url: config.proxyTestUrl,
-      proxyConfigured: Boolean(config.proxy?.server),
+      proxyConfigured: Boolean(selectedProxy?.server),
       result: parsed,
     };
 
