@@ -35,13 +35,22 @@ const logger = {
   },
 };
 
-async function main() {
-  const config = loadAnalysisConfig();
+export async function runAnalysisWorkflow(argv = process.argv.slice(2), cwd = process.cwd()) {
+  const config = loadAnalysisConfig(argv, cwd);
   const posts = await loadAnalysisPosts(config);
   const analyses = await analyzePostsWithGemini(posts, config, logger);
   const rows = posts.map((post, index) => buildRow(post, analyses[index]));
   const outputPath = await writeAnalysisWorkbook(rows, config);
 
+  return {
+    config,
+    rows,
+    outputPath,
+  };
+}
+
+async function main() {
+  const { rows, outputPath } = await runAnalysisWorkflow();
   console.log(`analysis-completed | rows=${rows.length} | output=${outputPath}`);
 }
 

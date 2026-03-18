@@ -104,6 +104,15 @@ Set a runtime limit:
 node src/index.js --runtime-minutes 60
 ```
 
+Run the scraper every 15 minutes for 2 hours, then export the XLSX analysis once at the end:
+
+```bash
+node src/index.js \
+  --schedule-total-minutes 120 \
+  --schedule-interval-minutes 15 \
+  --schedule-run-analyzer=true
+```
+
 Verify outbound IP through the configured proxy:
 
 ```bash
@@ -156,6 +165,9 @@ Supported `.env` variables:
 - `GROUP_URL`
 - `MAX_POSTS`
 - `RUNTIME_MINUTES`
+- `SCHEDULE_TOTAL_MINUTES`
+- `SCHEDULE_INTERVAL_MINUTES`
+- `SCHEDULE_RUN_ANALYZER`
 - `PROXY_SERVER`
 - `PROXY_USERNAME`
 - `PROXY_PASSWORD`
@@ -197,6 +209,9 @@ Supported CLI flags:
 - `--url`
 - `--max-posts`
 - `--runtime-minutes`
+- `--schedule-total-minutes`
+- `--schedule-interval-minutes`
+- `--schedule-run-analyzer=true|false`
 - `--output-dir`
 - `--no-proxy`
 - `--proxy-server`
@@ -223,11 +238,11 @@ CLI flags override `.env`.
 
 Useful npm scripts:
 
-- `npm run start`: run with whatever proxy settings are currently in `.env`
+- `npm run start:proxy`: run with whatever proxy settings are currently in `.env`
 - `npm run start:no-proxy`: force a direct run without proxy or proxy pool
-- `npm run start:with-proxy`: explicit alias for the proxied `.env` run
+- `npm run start:scheduled`: run the main entrypoint with schedule settings from `.env`
 - `npm run test:proxy`: verify outbound IP through the current proxy configuration
-- `npm run analyze:xlsx`: analyze the latest saved result folder with Gemini and export `output/xlsx/output.xlsx`
+- `npm run analyze:xlsx`: analyze the cumulative saved result folder with Gemini and export `output/xlsx/output.xlsx`
 
 ## Output
 

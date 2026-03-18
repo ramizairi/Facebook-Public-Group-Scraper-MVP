@@ -101,6 +101,9 @@ const ConfigSchema = z
     testProxy: z.boolean(),
     noProxy: z.boolean(),
     headless: z.boolean(),
+    scheduleTotalMinutes: z.number().positive().nullable(),
+    scheduleIntervalMinutes: z.number().positive(),
+    scheduleRunAnalyzer: z.boolean(),
     startupRetries: z.number().int().nonnegative(),
     startupSettleMs: z.number().int().nonnegative(),
     homeWarmup: z.boolean(),
@@ -146,6 +149,14 @@ const ConfigSchema = z
         path: ["maxDelayMs"],
       });
     }
+
+    if (value.scheduleTotalMinutes != null && value.scheduleIntervalMinutes <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "scheduleIntervalMinutes must be positive when scheduleTotalMinutes is set.",
+        path: ["scheduleIntervalMinutes"],
+      });
+    }
   });
 
 export function loadConfig(argv = process.argv.slice(2), cwd = process.cwd()) {
@@ -183,6 +194,18 @@ export function loadConfig(argv = process.argv.slice(2), cwd = process.cwd()) {
     testProxy: parseBoolean(cli["test-proxy"], false),
     noProxy,
     headless: parseBoolean(cli.headless ?? env.HEADLESS, true),
+    scheduleTotalMinutes: parseNumber(
+      cli["schedule-total-minutes"] ?? env.SCHEDULE_TOTAL_MINUTES,
+      null,
+    ),
+    scheduleIntervalMinutes: parseNumber(
+      cli["schedule-interval-minutes"] ?? env.SCHEDULE_INTERVAL_MINUTES,
+      15,
+    ),
+    scheduleRunAnalyzer: parseBoolean(
+      cli["schedule-run-analyzer"] ?? env.SCHEDULE_RUN_ANALYZER,
+      true,
+    ),
     startupRetries: parseNumber(cli["startup-retries"] ?? env.STARTUP_RETRIES, 2),
     startupSettleMs: parseNumber(cli["startup-settle-ms"] ?? env.STARTUP_SETTLE_MS, 1_500),
     homeWarmup: parseBoolean(cli["home-warmup"] ?? env.HOME_WARMUP, true),
