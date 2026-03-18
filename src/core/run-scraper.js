@@ -3,6 +3,7 @@ import { DedupStore } from "./dedup-store.js";
 import { detectBlockState } from "./block-detection.js";
 import { MetricsTracker } from "./metrics.js";
 import { normalizeCandidate } from "./normalize.js";
+import { isRetriableProxyError } from "../browser/proxy-errors.js";
 import { ProxyPool } from "../browser/proxy-pool.js";
 import { closeBrowserSession, launchBrowserSession } from "../browser/session.js";
 import { warmupFacebookSession } from "../browser/warmup.js";
@@ -181,6 +182,10 @@ export async function runScraper(config, outputManager, logger) {
   let session = null;
   let networkTap = null;
   const proxyPool = await ProxyPool.create(config, logger);
+  const maxStartupAttempts =
+    proxyPool?.hasProxies() && config.proxyRotateOnRetry
+      ? Math.max(config.startupRetries + 1, proxyPool.proxies.length)
+      : config.startupRetries + 1;
   let blockedSessionRotations = 0;
   const maxBlockedSessionRotations = Math.max(config.startupRetries + 1, proxyPool?.proxies.length ?? 0);
 
@@ -233,7 +238,7 @@ export async function runScraper(config, outputManager, logger) {
     let accepted = [];
     let initialBlockState = null;
 
-    for (let attempt = 0; attempt <= config.startupRetries; attempt += 1) {
+    for (let attempt = 0; attempt < maxStartupAttempts; attempt += 1) {
       if (attempt > 0) {
         metrics.recordRetry();
       }
@@ -246,64 +251,90 @@ export async function runScraper(config, outputManager, logger) {
         networkTap = null;
       }
 
-      await startSession(attempt > 0 ? "startup-retry" : "initial");
-      await settleStartupPage(session.page, config);
+      try {
+        await startSession(attempt > 0 ? "startup-retry" : "initial");
+        await settleStartupPage(session.page, config);
 
-      const initialCandidates = [
-        ...(await collectDocumentCandidates(session.page, config)),
-        ...(await collectNetworkCandidates(networkTap, outputManager, config)),
-      ];
+        const initialCandidates = [
+          ...(await collectDocumentCandidates(session.page, config)),
+          ...(await collectNetworkCandidates(networkTap, outputManager, config)),
+        ];
 
-      const initialResult = acceptCandidates({
-        candidates: initialCandidates,
-        posts,
-        dedupStore,
-        metrics,
-        config,
-      });
-      accepted = initialResult.accepted;
-
-      if (initialResult.skippedForeignGroup > 0) {
-        logger.info({
-          event: "skipped-foreign-group-posts",
-          count: initialResult.skippedForeignGroup,
-          requestedGroupUrl: config.groupUrl,
-        });
-      }
-
-      if (!accepted.length) {
-        const domResult = acceptCandidates({
-          candidates: await extractDomPosts(session.page, { groupUrl: config.groupUrl }),
+        const initialResult = acceptCandidates({
+          candidates: initialCandidates,
           posts,
           dedupStore,
           metrics,
           config,
         });
-        accepted = domResult.accepted;
+        accepted = initialResult.accepted;
+
+        if (initialResult.skippedForeignGroup > 0) {
+          logger.info({
+            event: "skipped-foreign-group-posts",
+            count: initialResult.skippedForeignGroup,
+            requestedGroupUrl: config.groupUrl,
+          });
+        }
+
+        if (!accepted.length) {
+          const domResult = acceptCandidates({
+            candidates: await extractDomPosts(session.page, { groupUrl: config.groupUrl }),
+            posts,
+            dedupStore,
+            metrics,
+            config,
+          });
+          accepted = domResult.accepted;
+        }
+
+        await outputManager.appendPosts(accepted);
+        const stats = await persistRunState({
+          config,
+          posts,
+          outputManager,
+          metrics,
+          networkTap: { getStats: buildNetworkSnapshot },
+        });
+        printProgress(stats);
+
+        initialBlockState = await detectBlockState(session.page);
+        if (accepted.length > 0 || !initialBlockState.blocked) {
+          break;
+        }
+
+        logger.info({
+          event: "startup-retry",
+          attempt: attempt + 1,
+          maxAttempts: maxStartupAttempts,
+          reason: initialBlockState.reason,
+          snapshot: initialBlockState.snapshot,
+        });
+      } catch (error) {
+        const retriable = isRetriableProxyError(error);
+        logger.warn({
+          event: "startup-error",
+          attempt: attempt + 1,
+          maxAttempts: maxStartupAttempts,
+          retriable,
+          error: error instanceof Error ? error.message : String(error),
+        });
+
+        if (networkTap) {
+          archiveCurrentNetworkStats();
+          networkTap.detach();
+          networkTap = null;
+        }
+
+        await closeBrowserSession(session);
+        session = null;
+
+        if (retriable && attempt + 1 < maxStartupAttempts) {
+          continue;
+        }
+
+        throw error;
       }
-
-      await outputManager.appendPosts(accepted);
-      const stats = await persistRunState({
-        config,
-        posts,
-        outputManager,
-        metrics,
-        networkTap: { getStats: buildNetworkSnapshot },
-      });
-      printProgress(stats);
-
-      initialBlockState = await detectBlockState(session.page);
-      if (accepted.length > 0 || !initialBlockState.blocked) {
-        break;
-      }
-
-      logger.info({
-        event: "startup-retry",
-        attempt: attempt + 1,
-        maxAttempts: config.startupRetries + 1,
-        reason: initialBlockState.reason,
-        snapshot: initialBlockState.snapshot,
-      });
     }
 
     if (initialBlockState?.blocked && posts.length === 0) {

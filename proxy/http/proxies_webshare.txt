@@ -1,3 +1,4 @@
+brd.superproxy.io:9222:brd-customer-hl_b4d20f7e-zone-mobile_proxy1:95wyfvhz8zz4
 brd.superproxy.io:33335:brd-customer-hl_b4d20f7e-zone-residential_proxy1:x4bozr62uvwk
 31.59.20.176:6754:ebywkquq:4d37d73jym2m
 23.95.150.145:6114:ebywkquq:4d37d73jym2m
