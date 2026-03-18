@@ -88,6 +88,39 @@ Verify outbound IP through the configured proxy:
 node src/index.js --test-proxy
 ```
 
+## Docker
+
+Build the image:
+
+```bash
+docker build -t facebook-public-group-scraper .
+```
+
+Run with your local `.env` and write outputs back to `./output` on the host:
+
+```bash
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  --env-file .env \
+  -v "$(pwd)/output:/app/output" \
+  facebook-public-group-scraper \
+  --max-posts 100
+```
+
+Use Docker Compose:
+
+```bash
+DOCKER_UID=$(id -u) DOCKER_GID=$(id -g) docker compose run --rm scraper --max-posts 100
+```
+
+Notes:
+
+- The container does not copy your local `.env` into the image.
+- Relative output paths resolve under `/app` in the container, so the default blank `OUTPUT_DIR=` still maps into the mounted `./output` directory on the host.
+- When you bind-mount `./output`, run the container with your host UID/GID so the scraper can write logs and JSON files without root-owned permission issues.
+- If you still need `sudo` for Docker access, export the variables first and then use `sudo -E docker compose ...`.
+- Docker support is additive only; the local Node.js workflow remains unchanged.
+
 ## Config
 
 Supported `.env` variables:

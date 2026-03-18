@@ -1,0 +1,12 @@
+.git
+.env
+node_modules
+output
+artifacts
+debug
+logs
+checkpoint.json
+posts.json
+posts.jsonl
+stats.json
+npm-debug.log*
