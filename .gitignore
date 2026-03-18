@@ -1,6 +1,7 @@
 node_modules/
-output/
 /output/
-artifacts/
-.env
+/artifacts/
+/.env
 npm-debug.log*
+!src/output/
+!src/output/**
