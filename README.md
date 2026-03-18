@@ -5,7 +5,7 @@ Browser-backed Facebook public group scraper built with Node.js and Playwright. 
 ## What It Does
 
 - Reads `GROUP_URL` from `.env` by default and allows CLI overrides.
-- Treats blank optional `.env` values such as `OUTPUT_DIR=` as unset and falls back to defaults.
+- Creates a fresh numbered output folder automatically as `output/resultN` unless `--output-dir` is passed explicitly.
 - Launches a Playwright Chromium browser with optional proxy support.
 - Warms up a logged-out Facebook session on `facebook.com` before opening the group URL to reduce cold-start login redirects.
 - Captures relevant network/document payloads and extracts posts from embedded JSON or response bodies first.
@@ -54,6 +54,8 @@ Run with `.env` defaults:
 ```bash
 node src/index.js --max-posts 100
 ```
+
+By default, each run writes into the next available folder such as `output/result1`, `output/result2`, and so on.
 
 Override the group URL for a one-off run:
 
@@ -116,7 +118,7 @@ DOCKER_UID=$(id -u) DOCKER_GID=$(id -g) docker compose run --rm scraper --max-po
 Notes:
 
 - The container does not copy your local `.env` into the image.
-- Relative output paths resolve under `/app` in the container, so the default blank `OUTPUT_DIR=` still maps into the mounted `./output` directory on the host.
+- Auto-generated result folders are created under `/app/output/resultN` in the container and map back to `./output/resultN` on the host.
 - When you bind-mount `./output`, run the container with your host UID/GID so the scraper can write logs and JSON files without root-owned permission issues.
 - If you still need `sudo` for Docker access, export the variables first and then use `sudo -E docker compose ...`.
 - Docker support is additive only; the local Node.js workflow remains unchanged.
@@ -128,7 +130,6 @@ Supported `.env` variables:
 - `GROUP_URL`
 - `MAX_POSTS`
 - `RUNTIME_MINUTES`
-- `OUTPUT_DIR`
 - `PROXY_SERVER`
 - `PROXY_USERNAME`
 - `PROXY_PASSWORD`
@@ -170,6 +171,7 @@ CLI flags override `.env`.
 
 Each run writes into the configured output directory:
 
+- default path: `output/resultN`
 - `posts.json`: full normalized post array
 - `posts.jsonl`: append-friendly line-delimited post stream
 - `stats.json`: run metrics and throughput

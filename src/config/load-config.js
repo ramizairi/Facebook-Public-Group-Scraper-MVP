@@ -2,7 +2,8 @@ import path from "node:path";
 import { config as loadDotEnv } from "dotenv";
 import { z } from "zod";
 
-import { deriveOutputSlug, normalizeGroupUrl } from "../utils/facebook-url.js";
+import { normalizeGroupUrl } from "../utils/facebook-url.js";
+import { resolveAutoOutputDir } from "../utils/output-dir.js";
 
 const BOOLEAN_TRUE = new Set(["1", "true", "yes", "on"]);
 const BOOLEAN_FALSE = new Set(["0", "false", "no", "off"]);
@@ -145,9 +146,8 @@ export function loadConfig(argv = process.argv.slice(2), cwd = process.cwd()) {
 
   const rawGroupUrl = pickFirstNonEmpty(cli.url, env.GROUP_URL);
   const groupUrl = rawGroupUrl ? normalizeGroupUrl(rawGroupUrl) : null;
-  const outputSlug = deriveOutputSlug(groupUrl);
-  const rawOutputDir =
-    pickFirstNonEmpty(cli["output-dir"], env.OUTPUT_DIR) ?? path.join(cwd, "output", outputSlug);
+  const resume = parseBoolean(cli.resume, false);
+  const rawOutputDir = pickFirstNonEmpty(cli["output-dir"]) ?? resolveAutoOutputDir(cwd, { resume });
   const proxyServer = pickFirstNonEmpty(cli["proxy-server"], env.PROXY_SERVER) ?? "";
   const proxyUsername = pickFirstNonEmpty(cli["proxy-username"], env.PROXY_USERNAME) ?? "";
   const proxyPassword = pickFirstNonEmpty(cli["proxy-password"], env.PROXY_PASSWORD) ?? "";
@@ -157,7 +157,7 @@ export function loadConfig(argv = process.argv.slice(2), cwd = process.cwd()) {
     maxPosts: parseNumber(cli["max-posts"] ?? env.MAX_POSTS, 100),
     runtimeMinutes: parseNumber(cli["runtime-minutes"] ?? env.RUNTIME_MINUTES, null),
     outputDir: path.resolve(cwd, rawOutputDir),
-    resume: parseBoolean(cli.resume, false),
+    resume,
     testProxy: parseBoolean(cli["test-proxy"], false),
     headless: parseBoolean(cli.headless ?? env.HEADLESS, true),
     startupRetries: parseNumber(cli["startup-retries"] ?? env.STARTUP_RETRIES, 2),

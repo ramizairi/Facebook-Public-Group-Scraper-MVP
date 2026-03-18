@@ -10,7 +10,6 @@ const ENV_KEYS = [
   "GROUP_URL",
   "MAX_POSTS",
   "RUNTIME_MINUTES",
-  "OUTPUT_DIR",
   "PROXY_SERVER",
   "PROXY_USERNAME",
   "PROXY_PASSWORD",
@@ -65,14 +64,14 @@ test("loadConfig uses .env defaults and lets CLI override them", async () => {
     assert.equal(config.groupUrl, "https://www.facebook.com/groups/override-group/");
     assert.equal(config.maxPosts, 5);
     assert.equal(config.proxy.server, "http://proxy.example:8080");
-    assert.ok(config.outputDir.endsWith(path.join("output", "override-group")));
+    assert.ok(config.outputDir.endsWith(path.join("output", "result1")));
   } finally {
     restoreEnv(previousEnv);
     await fs.rm(tempDir, { recursive: true, force: true });
   }
 });
 
-test("loadConfig ignores blank OUTPUT_DIR and uses the derived default", async () => {
+test("loadConfig ignores OUTPUT_DIR from .env and uses auto-numbered result folders", async () => {
   const previousEnv = snapshotEnv();
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "fb-config-test-"));
 
@@ -83,12 +82,41 @@ test("loadConfig ignores blank OUTPUT_DIR and uses the derived default", async (
 
     await fs.writeFile(
       path.join(tempDir, ".env"),
-      ["GROUP_URL=https://www.facebook.com/groups/blank-output-group/", "OUTPUT_DIR="].join("\n"),
+      ["GROUP_URL=https://www.facebook.com/groups/blank-output-group/", "OUTPUT_DIR=output/cov2"].join("\n"),
       "utf8",
     );
 
+    await fs.mkdir(path.join(tempDir, "output", "result1"), { recursive: true });
+    await fs.mkdir(path.join(tempDir, "output", "result2"), { recursive: true });
+
     const config = loadConfig([], tempDir);
-    assert.equal(config.outputDir, path.join(tempDir, "output", "blank-output-group"));
+    assert.equal(config.outputDir, path.join(tempDir, "output", "result3"));
+  } finally {
+    restoreEnv(previousEnv);
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("loadConfig uses the latest auto-numbered result folder for resume runs", async () => {
+  const previousEnv = snapshotEnv();
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "fb-config-test-"));
+
+  try {
+    for (const key of ENV_KEYS) {
+      delete process.env[key];
+    }
+
+    await fs.writeFile(
+      path.join(tempDir, ".env"),
+      ["GROUP_URL=https://www.facebook.com/groups/resume-group/"].join("\n"),
+      "utf8",
+    );
+
+    await fs.mkdir(path.join(tempDir, "output", "result2"), { recursive: true });
+    await fs.mkdir(path.join(tempDir, "output", "result5"), { recursive: true });
+
+    const config = loadConfig(["--resume"], tempDir);
+    assert.equal(config.outputDir, path.join(tempDir, "output", "result5"));
   } finally {
     restoreEnv(previousEnv);
     await fs.rm(tempDir, { recursive: true, force: true });
