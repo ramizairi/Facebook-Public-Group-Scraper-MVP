@@ -7,6 +7,22 @@ function buildTimestampLabel() {
   return new Date().toISOString().replace(/[:.]/g, "-");
 }
 
+async function cleanupLegacyDebugArtifacts(debugDir) {
+  const entries = await fs.readdir(debugDir, { withFileTypes: true }).catch(() => []);
+
+  for (const entry of entries) {
+    if (!entry.isFile()) {
+      continue;
+    }
+
+    if (!/\.(?:png|html)$/i.test(entry.name)) {
+      continue;
+    }
+
+    await fs.rm(path.join(debugDir, entry.name), { force: true });
+  }
+}
+
 export class OutputManager {
   constructor(paths, payloadSampleLimit = 12) {
     this.paths = paths;
@@ -30,6 +46,7 @@ export class OutputManager {
     await fs.mkdir(paths.root, { recursive: true });
     await fs.mkdir(paths.logsDir, { recursive: true });
     await fs.mkdir(paths.debugDir, { recursive: true });
+    await cleanupLegacyDebugArtifacts(paths.debugDir);
 
     return new OutputManager(paths, payloadSampleLimit);
   }
@@ -100,23 +117,8 @@ export class OutputManager {
 
   async captureFailure(page, networkTap, label, extra = {}) {
     const suffix = buildTimestampLabel();
-    const screenshotFile = path.join(this.paths.debugDir, `failure-${label}-${suffix}.png`);
-    const htmlFile = `failure-${label}-${suffix}.html`;
     const networkFile = `failure-${label}-${suffix}-network.json`;
     const metaFile = `failure-${label}-${suffix}.json`;
-
-    try {
-      await page.screenshot({ path: screenshotFile, fullPage: true });
-    } catch {
-      // Ignore screenshot failures when the page is already gone.
-    }
-
-    try {
-      const html = await page.content();
-      await this.writeDebugText(htmlFile, html);
-    } catch {
-      // Ignore HTML capture failures when the page is already gone.
-    }
 
     await this.writeDebugJson(networkFile, networkTap?.getRecentEntries(120) ?? []);
     await this.writeDebugJson(metaFile, {

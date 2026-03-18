@@ -24,6 +24,8 @@ const ENV_KEYS = [
   "MIN_DELAY_MS",
   "MAX_DELAY_MS",
   "NO_NEW_POST_CYCLES",
+  "NETWORK_STALL_RECYCLE_CYCLES",
+  "MAX_NETWORK_STALL_RESTARTS",
   "BROWSER_RECYCLE_REQUESTS",
   "HEADLESS",
   "PROXY_TEST_URL",
@@ -72,14 +74,15 @@ test("loadConfig uses .env defaults and lets CLI override them", async () => {
     assert.equal(config.maxPosts, 5);
     assert.equal(config.proxy.server, "http://proxy.example:8080");
     assert.equal(config.proxyPoolDir, path.join(tempDir, "proxy", "socket5"));
-    assert.ok(config.outputDir.endsWith(path.join("output", "result1")));
+    assert.equal(config.resume, true);
+    assert.ok(config.outputDir.endsWith(path.join("output", "result")));
   } finally {
     restoreEnv(previousEnv);
     await fs.rm(tempDir, { recursive: true, force: true });
   }
 });
 
-test("loadConfig ignores OUTPUT_DIR from .env and uses auto-numbered result folders", async () => {
+test("loadConfig ignores OUTPUT_DIR from .env and uses the cumulative output/result folder", async () => {
   const previousEnv = snapshotEnv();
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "fb-config-test-"));
 
@@ -94,18 +97,15 @@ test("loadConfig ignores OUTPUT_DIR from .env and uses auto-numbered result fold
       "utf8",
     );
 
-    await fs.mkdir(path.join(tempDir, "output", "result1"), { recursive: true });
-    await fs.mkdir(path.join(tempDir, "output", "result2"), { recursive: true });
-
     const config = loadConfig([], tempDir);
-    assert.equal(config.outputDir, path.join(tempDir, "output", "result3"));
+    assert.equal(config.outputDir, path.join(tempDir, "output", "result"));
   } finally {
     restoreEnv(previousEnv);
     await fs.rm(tempDir, { recursive: true, force: true });
   }
 });
 
-test("loadConfig uses the latest auto-numbered result folder for resume runs", async () => {
+test("loadConfig uses the cumulative output/result folder for resume runs", async () => {
   const previousEnv = snapshotEnv();
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "fb-config-test-"));
 
@@ -120,11 +120,8 @@ test("loadConfig uses the latest auto-numbered result folder for resume runs", a
       "utf8",
     );
 
-    await fs.mkdir(path.join(tempDir, "output", "result2"), { recursive: true });
-    await fs.mkdir(path.join(tempDir, "output", "result5"), { recursive: true });
-
     const config = loadConfig(["--resume"], tempDir);
-    assert.equal(config.outputDir, path.join(tempDir, "output", "result5"));
+    assert.equal(config.outputDir, path.join(tempDir, "output", "result"));
   } finally {
     restoreEnv(previousEnv);
     await fs.rm(tempDir, { recursive: true, force: true });
