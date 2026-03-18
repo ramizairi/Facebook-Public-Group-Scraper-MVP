@@ -21,13 +21,14 @@ export async function loadCheckpoint(outputDir) {
   }
 }
 
-export function buildCheckpoint({ config, posts, stats }) {
+export function buildCheckpoint({ config, posts, unfilteredPosts, stats }) {
   return {
-    version: 1,
+    version: 2,
     savedAt: nowIso(),
     groupUrl: config.groupUrl,
     outputDir: config.outputDir,
     posts,
+    unfilteredPosts: Array.isArray(unfilteredPosts) ? unfilteredPosts : posts,
     stats,
   };
 }

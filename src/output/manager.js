@@ -21,6 +21,8 @@ export class OutputManager {
       debugDir: path.join(outputDir, "debug"),
       postsJson: path.join(outputDir, "posts.json"),
       postsJsonl: path.join(outputDir, "posts.jsonl"),
+      postsUnfilteredJson: path.join(outputDir, "posts.unfiltered.json"),
+      postsUnfilteredJsonl: path.join(outputDir, "posts.unfiltered.jsonl"),
       statsJson: path.join(outputDir, "stats.json"),
       logFile: path.join(outputDir, "logs", "run.log"),
     };
@@ -32,23 +34,31 @@ export class OutputManager {
     return new OutputManager(paths, payloadSampleLimit);
   }
 
-  async resetPosts(posts) {
+  async resetPosts(posts, unfilteredPosts = posts) {
     await fs.writeFile(this.paths.postsJson, safeJsonStringify(posts), "utf8");
-    const jsonl = posts.map((post) => JSON.stringify(post)).join("\n");
-    await fs.writeFile(this.paths.postsJsonl, jsonl ? `${jsonl}\n` : "", "utf8");
+    const filteredJsonl = posts.map((post) => JSON.stringify(post)).join("\n");
+    await fs.writeFile(this.paths.postsJsonl, filteredJsonl ? `${filteredJsonl}\n` : "", "utf8");
+
+    await fs.writeFile(this.paths.postsUnfilteredJson, safeJsonStringify(unfilteredPosts), "utf8");
+    const unfilteredJsonl = unfilteredPosts.map((post) => JSON.stringify(post)).join("\n");
+    await fs.writeFile(this.paths.postsUnfilteredJsonl, unfilteredJsonl ? `${unfilteredJsonl}\n` : "", "utf8");
   }
 
-  async appendPosts(posts) {
-    if (!posts.length) {
-      return;
+  async appendPosts(posts, unfilteredPosts = posts) {
+    if (posts.length) {
+      const filteredLines = posts.map((post) => JSON.stringify(post)).join("\n");
+      await fs.appendFile(this.paths.postsJsonl, `${filteredLines}\n`, "utf8");
     }
 
-    const lines = posts.map((post) => JSON.stringify(post)).join("\n");
-    await fs.appendFile(this.paths.postsJsonl, `${lines}\n`, "utf8");
+    if (unfilteredPosts.length) {
+      const unfilteredLines = unfilteredPosts.map((post) => JSON.stringify(post)).join("\n");
+      await fs.appendFile(this.paths.postsUnfilteredJsonl, `${unfilteredLines}\n`, "utf8");
+    }
   }
 
-  async writePostsJson(posts) {
+  async writePostsJson(posts, unfilteredPosts = posts) {
     await fs.writeFile(this.paths.postsJson, safeJsonStringify(posts), "utf8");
+    await fs.writeFile(this.paths.postsUnfilteredJson, safeJsonStringify(unfilteredPosts), "utf8");
   }
 
   async writeStats(stats) {

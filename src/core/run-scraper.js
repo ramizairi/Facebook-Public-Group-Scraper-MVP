@@ -72,20 +72,30 @@ async function collectDocumentCandidates(page, config) {
 
 function acceptCandidates({ candidates, posts, dedupStore, metrics, config }) {
   const accepted = [];
+  const unfilteredAccepted = [];
   let skippedForeignGroup = 0;
 
   for (const candidate of candidates) {
-    const normalized = normalizeCandidate(candidate, config.groupUrl);
-    if (!normalized) {
+    const unfilteredNormalized = normalizeCandidate(candidate, config.groupUrl, {
+      allowShellPosts: true,
+    });
+    if (!unfilteredNormalized) {
       continue;
     }
 
-    if (!sameGroupUrl(normalized.groupUrl, config.groupUrl)) {
+    if (!sameGroupUrl(unfilteredNormalized.groupUrl, config.groupUrl)) {
       skippedForeignGroup += 1;
       continue;
     }
 
-    if (dedupStore.has(normalized)) {
+    if (!config.unfilteredDedupStore.has(unfilteredNormalized)) {
+      config.unfilteredDedupStore.add(unfilteredNormalized);
+      config.unfilteredPosts.push(unfilteredNormalized);
+      unfilteredAccepted.push(unfilteredNormalized);
+    }
+
+    const normalized = normalizeCandidate(candidate, config.groupUrl);
+    if (!normalized || dedupStore.has(normalized)) {
       continue;
     }
 
@@ -101,23 +111,26 @@ function acceptCandidates({ candidates, posts, dedupStore, metrics, config }) {
 
   return {
     accepted,
+    unfilteredAccepted,
     skippedForeignGroup,
   };
 }
 
-async function persistRunState({ config, posts, outputManager, metrics, networkTap }) {
+async function persistRunState({ config, posts, unfilteredPosts, outputManager, metrics, networkTap }) {
   const stats = metrics.snapshot({
     uniquePosts: posts.length,
     networkStats: networkTap.getStats(),
   });
+  stats.unfilteredUniquePosts = unfilteredPosts.length;
 
-  await outputManager.writePostsJson(posts);
+  await outputManager.writePostsJson(posts, unfilteredPosts);
   await outputManager.writeStats(stats);
   await persistCheckpoint(
     config.outputDir,
     buildCheckpoint({
       config,
       posts,
+      unfilteredPosts,
       stats,
     }),
   );
@@ -169,7 +182,12 @@ export async function runScraper(config, outputManager, logger) {
 
   const posts =
     Array.isArray(checkpoint?.posts) && checkpointMatchesGroup ? [...checkpoint.posts] : [];
+  const unfilteredPosts =
+    Array.isArray(checkpoint?.unfilteredPosts) && checkpointMatchesGroup
+      ? [...checkpoint.unfilteredPosts]
+      : [...posts];
   const dedupStore = new DedupStore(posts);
+  const unfilteredDedupStore = new DedupStore(unfilteredPosts);
   const metrics = new MetricsTracker(posts.length);
   const startedAtMs = Date.now();
   const archivedNetworkStats = {
@@ -189,7 +207,7 @@ export async function runScraper(config, outputManager, logger) {
   let blockedSessionRotations = 0;
   const maxBlockedSessionRotations = Math.max(config.startupRetries + 1, proxyPool?.proxies.length ?? 0);
 
-  await outputManager.resetPosts(posts);
+  await outputManager.resetPosts(posts, unfilteredPosts);
 
   const buildNetworkSnapshot = () => {
     const current = networkTap?.getStats() ?? {
@@ -237,6 +255,11 @@ export async function runScraper(config, outputManager, logger) {
   try {
     let accepted = [];
     let initialBlockState = null;
+    const acceptConfig = {
+      ...config,
+      unfilteredPosts,
+      unfilteredDedupStore,
+    };
 
     for (let attempt = 0; attempt < maxStartupAttempts; attempt += 1) {
       if (attempt > 0) {
@@ -265,7 +288,7 @@ export async function runScraper(config, outputManager, logger) {
           posts,
           dedupStore,
           metrics,
-          config,
+          config: acceptConfig,
         });
         accepted = initialResult.accepted;
 
@@ -283,15 +306,17 @@ export async function runScraper(config, outputManager, logger) {
             posts,
             dedupStore,
             metrics,
-            config,
+            config: acceptConfig,
           });
           accepted = domResult.accepted;
+          await outputManager.appendPosts([], domResult.unfilteredAccepted);
         }
 
-        await outputManager.appendPosts(accepted);
+        await outputManager.appendPosts(accepted, initialResult.unfilteredAccepted);
         const stats = await persistRunState({
           config,
           posts,
+          unfilteredPosts,
           outputManager,
           metrics,
           networkTap: { getStats: buildNetworkSnapshot },
@@ -345,6 +370,7 @@ export async function runScraper(config, outputManager, logger) {
     let stats = await persistRunState({
       config,
       posts,
+      unfilteredPosts,
       outputManager,
       metrics,
       networkTap: { getStats: buildNetworkSnapshot },
@@ -369,13 +395,14 @@ export async function runScraper(config, outputManager, logger) {
       const structuredCandidates = await cycleCandidates;
       let {
         accepted: newlyAccepted,
+        unfilteredAccepted: newlyUnfilteredAccepted,
         skippedForeignGroup,
       } = acceptCandidates({
         candidates: structuredCandidates,
         posts,
         dedupStore,
         metrics,
-        config,
+        config: acceptConfig,
       });
       if (skippedForeignGroup > 0) {
         logger.info({
@@ -391,21 +418,23 @@ export async function runScraper(config, outputManager, logger) {
           posts,
           dedupStore,
           metrics,
-          config,
+          config: acceptConfig,
         });
         newlyAccepted = domResult.accepted;
+        newlyUnfilteredAccepted = domResult.unfilteredAccepted;
       }
 
       noNewCycles = newlyAccepted.length ? 0 : noNewCycles + 1;
       if (newlyAccepted.length) {
         blockedSessionRotations = 0;
       }
-      await outputManager.appendPosts(newlyAccepted);
+      await outputManager.appendPosts(newlyAccepted, newlyUnfilteredAccepted);
 
       const blockState = await detectBlockState(session.page);
       stats = await persistRunState({
         config,
         posts,
+        unfilteredPosts,
         outputManager,
         metrics,
         networkTap: { getStats: buildNetworkSnapshot },
@@ -430,6 +459,7 @@ export async function runScraper(config, outputManager, logger) {
           await persistRunState({
             config,
             posts,
+            unfilteredPosts,
             outputManager,
             metrics,
             networkTap: { getStats: buildNetworkSnapshot },
@@ -462,6 +492,7 @@ export async function runScraper(config, outputManager, logger) {
         await persistRunState({
           config,
           posts,
+          unfilteredPosts,
           outputManager,
           metrics,
           networkTap: { getStats: buildNetworkSnapshot },
@@ -476,6 +507,7 @@ export async function runScraper(config, outputManager, logger) {
     const finalStats = await persistRunState({
       config,
       posts,
+      unfilteredPosts,
       outputManager,
       metrics,
       networkTap: { getStats: buildNetworkSnapshot },
@@ -504,6 +536,7 @@ export async function runScraper(config, outputManager, logger) {
       await persistRunState({
         config,
         posts,
+        unfilteredPosts,
         outputManager,
         metrics,
         networkTap: { getStats: () => archivedNetworkStats },
