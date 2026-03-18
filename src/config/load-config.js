@@ -98,6 +98,7 @@ const ConfigSchema = z
     outputDir: z.string().min(1),
     resume: z.boolean(),
     testProxy: z.boolean(),
+    noProxy: z.boolean(),
     headless: z.boolean(),
     startupRetries: z.number().int().nonnegative(),
     startupSettleMs: z.number().int().nonnegative(),
@@ -110,6 +111,12 @@ const ConfigSchema = z
     browserLocale: z.string().min(2),
     browserTimezone: z.string().min(1).nullable(),
     userAgent: z.string().min(1),
+    proxyPoolDir: z.string().min(1).nullable(),
+    proxyPoolProtocol: z.string().min(3),
+    proxyMaxSessionsPerProxy: z.number().int().positive(),
+    proxyRotateOnRetry: z.boolean(),
+    proxyRotateOnRecycle: z.boolean(),
+    proxyRotateOnBlock: z.boolean(),
     proxyTestUrl: z.string().url(),
     navigationTimeoutMs: z.number().int().positive(),
     proxy: z
@@ -147,10 +154,12 @@ export function loadConfig(argv = process.argv.slice(2), cwd = process.cwd()) {
   const rawGroupUrl = pickFirstNonEmpty(cli.url, env.GROUP_URL);
   const groupUrl = rawGroupUrl ? normalizeGroupUrl(rawGroupUrl) : null;
   const resume = parseBoolean(cli.resume, false);
+  const noProxy = parseBoolean(cli["no-proxy"], false);
   const rawOutputDir = pickFirstNonEmpty(cli["output-dir"]) ?? resolveAutoOutputDir(cwd, { resume });
-  const proxyServer = pickFirstNonEmpty(cli["proxy-server"], env.PROXY_SERVER) ?? "";
-  const proxyUsername = pickFirstNonEmpty(cli["proxy-username"], env.PROXY_USERNAME) ?? "";
-  const proxyPassword = pickFirstNonEmpty(cli["proxy-password"], env.PROXY_PASSWORD) ?? "";
+  const proxyServer = noProxy ? "" : (pickFirstNonEmpty(cli["proxy-server"], env.PROXY_SERVER) ?? "");
+  const proxyUsername = noProxy ? "" : (pickFirstNonEmpty(cli["proxy-username"], env.PROXY_USERNAME) ?? "");
+  const proxyPassword = noProxy ? "" : (pickFirstNonEmpty(cli["proxy-password"], env.PROXY_PASSWORD) ?? "");
+  const proxyPoolDir = noProxy ? null : pickFirstNonEmpty(cli["proxy-pool-dir"], env.PROXY_POOL_DIR);
 
   const config = ConfigSchema.parse({
     groupUrl,
@@ -159,6 +168,7 @@ export function loadConfig(argv = process.argv.slice(2), cwd = process.cwd()) {
     outputDir: path.resolve(cwd, rawOutputDir),
     resume,
     testProxy: parseBoolean(cli["test-proxy"], false),
+    noProxy,
     headless: parseBoolean(cli.headless ?? env.HEADLESS, true),
     startupRetries: parseNumber(cli["startup-retries"] ?? env.STARTUP_RETRIES, 2),
     startupSettleMs: parseNumber(cli["startup-settle-ms"] ?? env.STARTUP_SETTLE_MS, 1_500),
@@ -179,6 +189,18 @@ export function loadConfig(argv = process.argv.slice(2), cwd = process.cwd()) {
         env.USER_AGENT,
         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36",
       ),
+    proxyPoolDir: proxyPoolDir ? path.resolve(cwd, proxyPoolDir) : null,
+    proxyPoolProtocol: pickFirstNonEmpty(cli["proxy-pool-protocol"], env.PROXY_POOL_PROTOCOL, "socks5"),
+    proxyMaxSessionsPerProxy: parseNumber(
+      cli["proxy-max-sessions-per-proxy"] ?? env.PROXY_MAX_SESSIONS_PER_PROXY,
+      1,
+    ),
+    proxyRotateOnRetry: parseBoolean(cli["proxy-rotate-on-retry"] ?? env.PROXY_ROTATE_ON_RETRY, true),
+    proxyRotateOnRecycle: parseBoolean(
+      cli["proxy-rotate-on-recycle"] ?? env.PROXY_ROTATE_ON_RECYCLE,
+      true,
+    ),
+    proxyRotateOnBlock: parseBoolean(cli["proxy-rotate-on-block"] ?? env.PROXY_ROTATE_ON_BLOCK, true),
     proxyTestUrl: pickFirstNonEmpty(
       cli["proxy-test-url"],
       env.PROXY_TEST_URL,

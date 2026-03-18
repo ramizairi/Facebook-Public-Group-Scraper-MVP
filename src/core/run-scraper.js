@@ -3,6 +3,7 @@ import { DedupStore } from "./dedup-store.js";
 import { detectBlockState } from "./block-detection.js";
 import { MetricsTracker } from "./metrics.js";
 import { normalizeCandidate } from "./normalize.js";
+import { ProxyPool } from "../browser/proxy-pool.js";
 import { closeBrowserSession, launchBrowserSession } from "../browser/session.js";
 import { warmupFacebookSession } from "../browser/warmup.js";
 import { sleepWithJitter } from "../utils/delay.js";
@@ -136,6 +137,22 @@ function shouldRecycleBrowser(config, networkTap) {
   return networkTap.getStats().totalRequests >= config.browserRecycleRequests;
 }
 
+function shouldRotateProxy(config, reason) {
+  if (reason === "startup-retry") {
+    return config.proxyRotateOnRetry;
+  }
+
+  if (reason === "browser-recycle") {
+    return config.proxyRotateOnRecycle;
+  }
+
+  if (reason === "blocked-during-run") {
+    return config.proxyRotateOnBlock;
+  }
+
+  return false;
+}
+
 export async function runScraper(config, outputManager, logger) {
   const checkpoint = config.resume ? await loadCheckpoint(config.outputDir) : null;
   const checkpointMatchesGroup =
@@ -163,6 +180,9 @@ export async function runScraper(config, outputManager, logger) {
   let noNewCycles = 0;
   let session = null;
   let networkTap = null;
+  const proxyPool = await ProxyPool.create(config, logger);
+  let blockedSessionRotations = 0;
+  const maxBlockedSessionRotations = Math.max(config.startupRetries + 1, proxyPool?.proxies.length ?? 0);
 
   await outputManager.resetPosts(posts);
 
@@ -194,8 +214,14 @@ export async function runScraper(config, outputManager, logger) {
     archivedNetworkStats.failedRequests += current.failedRequests;
   };
 
-  const startSession = async () => {
-    session = await launchBrowserSession(config, logger);
+  const startSession = async (reason = "initial") => {
+    const selectedProxy =
+      proxyPool?.acquire({
+        reason,
+        forceRotate: shouldRotateProxy(config, reason),
+      }) ?? config.proxy;
+
+    session = await launchBrowserSession(config, logger, selectedProxy);
     await warmupFacebookSession(session, config, logger);
     networkTap = new NetworkTap(logger);
     networkTap.attach(session.page);
@@ -220,7 +246,7 @@ export async function runScraper(config, outputManager, logger) {
         networkTap = null;
       }
 
-      await startSession();
+      await startSession(attempt > 0 ? "startup-retry" : "initial");
       await settleStartupPage(session.page, config);
 
       const initialCandidates = [
@@ -340,6 +366,9 @@ export async function runScraper(config, outputManager, logger) {
       }
 
       noNewCycles = newlyAccepted.length ? 0 : noNewCycles + 1;
+      if (newlyAccepted.length) {
+        blockedSessionRotations = 0;
+      }
       await outputManager.appendPosts(newlyAccepted);
 
       const blockState = await detectBlockState(session.page);
@@ -354,6 +383,36 @@ export async function runScraper(config, outputManager, logger) {
 
       if (blockState.blocked && newlyAccepted.length === 0) {
         await outputManager.captureFailure(session.page, networkTap, "blocked-during-run", blockState);
+        if (
+          proxyPool?.hasProxies() &&
+          config.proxyRotateOnBlock &&
+          blockedSessionRotations < maxBlockedSessionRotations
+        ) {
+          logger.info({
+            event: "blocked-session-retry",
+            reason: blockState.reason,
+            attempt: blockedSessionRotations + 1,
+            maxAttempts: maxBlockedSessionRotations,
+          });
+          blockedSessionRotations += 1;
+          metrics.recordRetry();
+          await persistRunState({
+            config,
+            posts,
+            outputManager,
+            metrics,
+            networkTap: { getStats: buildNetworkSnapshot },
+          });
+          archiveCurrentNetworkStats();
+          networkTap.detach();
+          await closeBrowserSession(session);
+          session = null;
+          networkTap = null;
+          noNewCycles = 0;
+          await startSession("blocked-during-run");
+          continue;
+        }
+
         logger.info({ event: "stop", reason: blockState.reason });
         break;
       }
@@ -379,7 +438,7 @@ export async function runScraper(config, outputManager, logger) {
         archiveCurrentNetworkStats();
         networkTap.detach();
         await closeBrowserSession(session);
-        await startSession();
+        await startSession("browser-recycle");
       }
     }
 

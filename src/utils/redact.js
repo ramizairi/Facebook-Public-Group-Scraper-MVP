@@ -29,8 +29,10 @@ export function redactProxyConfig(proxy) {
 }
 
 export function sanitizeConfigForLog(config) {
-  return {
+  const sanitized = {
     ...config,
     proxy: redactProxyConfig(config.proxy),
   };
+
+  return sanitized;
 }

@@ -7,6 +7,7 @@ Browser-backed Facebook public group scraper built with Node.js and Playwright. 
 - Reads `GROUP_URL` from `.env` by default and allows CLI overrides.
 - Creates a fresh numbered output folder automatically as `output/resultN` unless `--output-dir` is passed explicitly.
 - Launches a Playwright Chromium browser with optional proxy support.
+- Supports single-proxy mode or proxy-pool rotation from files such as `proxy/socket5/*.txt`.
 - Warms up a logged-out Facebook session on `facebook.com` before opening the group URL to reduce cold-start login redirects.
 - Captures relevant network/document payloads and extracts posts from embedded JSON or response bodies first.
 - Falls back to `[role="feed"] [role="article"]` DOM parsing when structured extraction yields nothing new.
@@ -72,6 +73,24 @@ node src/index.js \
   --proxy-password=pass
 ```
 
+Use a proxy pool from files under `proxy/socket5/`:
+
+```bash
+node src/index.js --max-posts 100
+```
+
+Disable proxy usage even if `.env` contains proxy settings:
+
+```bash
+node src/index.js --no-proxy --max-posts 100
+```
+
+Accepted proxy line formats:
+
+- `host:port`
+- `host:port:username:password`
+- `socks5://username:password@host:port`
+
 Resume a previous run:
 
 ```bash
@@ -133,6 +152,12 @@ Supported `.env` variables:
 - `PROXY_SERVER`
 - `PROXY_USERNAME`
 - `PROXY_PASSWORD`
+- `PROXY_POOL_DIR`
+- `PROXY_POOL_PROTOCOL`
+- `PROXY_MAX_SESSIONS_PER_PROXY`
+- `PROXY_ROTATE_ON_RETRY`
+- `PROXY_ROTATE_ON_RECYCLE`
+- `PROXY_ROTATE_ON_BLOCK`
 - `STARTUP_RETRIES`
 - `STARTUP_SETTLE_MS`
 - `HOME_WARMUP`
@@ -153,9 +178,16 @@ Supported CLI flags:
 - `--max-posts`
 - `--runtime-minutes`
 - `--output-dir`
+- `--no-proxy`
 - `--proxy-server`
 - `--proxy-username`
 - `--proxy-password`
+- `--proxy-pool-dir`
+- `--proxy-pool-protocol`
+- `--proxy-max-sessions-per-proxy`
+- `--proxy-rotate-on-retry=true|false`
+- `--proxy-rotate-on-recycle=true|false`
+- `--proxy-rotate-on-block=true|false`
 - `--resume`
 - `--test-proxy`
 - `--browser-recycle-requests`
@@ -166,6 +198,13 @@ Supported CLI flags:
 - `--headless=true|false`
 
 CLI flags override `.env`.
+
+Useful npm scripts:
+
+- `npm run start`: run with whatever proxy settings are currently in `.env`
+- `npm run start:no-proxy`: force a direct run without proxy or proxy pool
+- `npm run start:with-proxy`: explicit alias for the proxied `.env` run
+- `npm run test:proxy`: verify outbound IP through the current proxy configuration
 
 ## Output
 

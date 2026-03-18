@@ -1,9 +1,10 @@
 import { chromium } from "playwright";
+import { redactProxyConfig } from "../utils/redact.js";
 
-export async function launchBrowserSession(config, logger) {
+export async function launchBrowserSession(config, logger, proxyOverride = config.proxy) {
   const browser = await chromium.launch({
     headless: config.headless,
-    proxy: config.proxy ?? undefined,
+    proxy: proxyOverride ?? undefined,
     args: ["--disable-blink-features=AutomationControlled"],
   });
 
@@ -38,6 +39,7 @@ export async function launchBrowserSession(config, logger) {
   logger.info({
     event: "browser-session-started",
     headless: config.headless,
+    proxy: redactProxyConfig(proxyOverride),
   });
 
   return {
