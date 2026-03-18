@@ -41,7 +41,7 @@ test("deriveCalendarWeek and deriveWeekday use Africa/Tunis calendar values", ()
   assert.equal(deriveWeekday("2026-03-18T18:31:13.000Z"), "Wednesday");
 });
 
-test("loadAnalysisConfig defaults to latest result posts.json", async () => {
+test("loadAnalysisConfig defaults to the cumulative result posts.json", async () => {
   const previousEnv = snapshotEnv();
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "fb-analyze-test-"));
 
@@ -56,13 +56,13 @@ test("loadAnalysisConfig defaults to latest result posts.json", async () => {
       "utf8",
     );
 
-    const latestResultDir = path.join(tempDir, "output", "result3");
-    await fs.mkdir(latestResultDir, { recursive: true });
-    await fs.writeFile(path.join(latestResultDir, "posts.json"), "[]", "utf8");
+    const resultDir = path.join(tempDir, "output", "result");
+    await fs.mkdir(resultDir, { recursive: true });
+    await fs.writeFile(path.join(resultDir, "posts.json"), "[]", "utf8");
 
     const config = loadAnalysisConfig([], tempDir);
-    assert.equal(config.inputDir, latestResultDir);
-    assert.equal(config.inputPostsFile, path.join(latestResultDir, "posts.json"));
+    assert.equal(config.inputDir, resultDir);
+    assert.equal(config.inputPostsFile, path.join(resultDir, "posts.json"));
     assert.equal(config.outputDir, path.join(tempDir, "output", "xlsx"));
   } finally {
     restoreEnv(previousEnv);

@@ -108,6 +108,8 @@ const ConfigSchema = z
     minDelayMs: z.number().int().nonnegative(),
     maxDelayMs: z.number().int().nonnegative(),
     noNewPostCycles: z.number().int().positive(),
+    networkStallRecycleCycles: z.number().int().positive(),
+    maxNetworkStallRestarts: z.number().int().nonnegative(),
     browserRecycleRequests: z.number().int().positive(),
     browserLocale: z.string().min(2),
     browserTimezone: z.string().min(1).nullable(),
@@ -154,7 +156,7 @@ export function loadConfig(argv = process.argv.slice(2), cwd = process.cwd()) {
 
   const rawGroupUrl = pickFirstNonEmpty(cli.url, env.GROUP_URL);
   const groupUrl = rawGroupUrl ? normalizeGroupUrl(rawGroupUrl) : null;
-  const resume = parseBoolean(cli.resume, false);
+  const resume = parseBoolean(cli.resume, true);
   const noProxy = parseBoolean(cli["no-proxy"], false);
   const rawOutputDir = pickFirstNonEmpty(cli["output-dir"]) ?? resolveAutoOutputDir(cwd, { resume });
   const proxyServer = noProxy ? "" : (pickFirstNonEmpty(cli["proxy-server"], env.PROXY_SERVER) ?? "");
@@ -188,6 +190,14 @@ export function loadConfig(argv = process.argv.slice(2), cwd = process.cwd()) {
     minDelayMs: parseNumber(cli["min-delay-ms"] ?? env.MIN_DELAY_MS, 1_200),
     maxDelayMs: parseNumber(cli["max-delay-ms"] ?? env.MAX_DELAY_MS, 2_800),
     noNewPostCycles: parseNumber(cli["no-new-post-cycles"] ?? env.NO_NEW_POST_CYCLES, 4),
+    networkStallRecycleCycles: parseNumber(
+      cli["network-stall-recycle-cycles"] ?? env.NETWORK_STALL_RECYCLE_CYCLES,
+      2,
+    ),
+    maxNetworkStallRestarts: parseNumber(
+      cli["max-network-stall-restarts"] ?? env.MAX_NETWORK_STALL_RESTARTS,
+      2,
+    ),
     browserRecycleRequests: parseNumber(
       cli["browser-recycle-requests"] ?? env.BROWSER_RECYCLE_REQUESTS,
       250,
