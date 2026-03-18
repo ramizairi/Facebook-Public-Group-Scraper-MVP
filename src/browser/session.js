@@ -1,10 +1,12 @@
 import { chromium } from "playwright";
-import { redactProxyConfig } from "../utils/redact.js";
+import { prepareBrowserProxy } from "./proxy-bridge.js";
+import { redactProxyConfig, summarizeProxyForConsole } from "../utils/redact.js";
 
 export async function launchBrowserSession(config, logger, proxyOverride = config.proxy) {
+  const preparedProxy = await prepareBrowserProxy(proxyOverride, logger);
   const browser = await chromium.launch({
     headless: config.headless,
-    proxy: proxyOverride ?? undefined,
+    proxy: preparedProxy.launchProxy ?? undefined,
     args: ["--disable-blink-features=AutomationControlled"],
   });
 
@@ -42,10 +44,30 @@ export async function launchBrowserSession(config, logger, proxyOverride = confi
     proxy: redactProxyConfig(proxyOverride),
   });
 
+  if (proxyOverride?.server) {
+    const selection = proxyOverride._selection ?? { mode: "single" };
+    const summary = [
+      "proxy",
+      `mode=${selection.mode ?? "single"}`,
+      `server=${summarizeProxyForConsole(proxyOverride)}`,
+    ];
+
+    if (selection.index && selection.count) {
+      summary.push(`index=${selection.index}/${selection.count}`);
+    }
+
+    if (selection.reason) {
+      summary.push(`reason=${selection.reason}`);
+    }
+
+    console.log(summary.join(" | "));
+  }
+
   return {
     browser,
     context,
     page,
+    cleanupProxy: preparedProxy.cleanup,
   };
 }
 
@@ -53,4 +75,5 @@ export async function closeBrowserSession(session) {
   await session?.page?.close().catch(() => {});
   await session?.context?.close().catch(() => {});
   await session?.browser?.close().catch(() => {});
+  await session?.cleanupProxy?.().catch(() => {});
 }

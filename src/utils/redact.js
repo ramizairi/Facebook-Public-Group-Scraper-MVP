@@ -28,6 +28,19 @@ export function redactProxyConfig(proxy) {
   };
 }
 
+export function summarizeProxyForConsole(proxy) {
+  if (!proxy?.server) {
+    return "direct";
+  }
+
+  try {
+    const parsed = new URL(proxy.server);
+    return `${parsed.protocol}//${parsed.hostname}${parsed.port ? `:${parsed.port}` : ""}`;
+  } catch {
+    return redactUserInfo(proxy.server);
+  }
+}
+
 export function sanitizeConfigForLog(config) {
   const sanitized = {
     ...config,

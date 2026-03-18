@@ -4,7 +4,8 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { ProxyPool, parseProxyLine } from "../src/browser/proxy-pool.js";
+import { buildProxyUrl } from "../src/browser/proxy-bridge.js";
+import { ProxyPool, normalizeProxyConfig, parseProxyLine } from "../src/browser/proxy-pool.js";
 
 const logger = {
   info() {},
@@ -18,6 +19,53 @@ test("parseProxyLine supports host:port:user:password format", () => {
     server: "socks5://31.59.20.176:6754",
     username: "ebywkquq",
     password: "4d37d73jym2m",
+  });
+});
+
+test("parseProxyLine supports username:password@host:port format", () => {
+  const proxy = parseProxyLine("ebywkquq:4d37d73jym2m@31.59.20.176:6754", "http");
+
+  assert.deepEqual(proxy, {
+    server: "http://31.59.20.176:6754",
+    username: "ebywkquq",
+    password: "4d37d73jym2m",
+  });
+});
+
+test("parseProxyLine supports host,port,username,password format", () => {
+  const proxy = parseProxyLine("brd.superproxy.io,33335,customer,password", "http");
+
+  assert.deepEqual(proxy, {
+    server: "http://brd.superproxy.io:33335",
+    username: "customer",
+    password: "password",
+  });
+});
+
+test("buildProxyUrl converts proxy objects to browser-safe upstream URLs", () => {
+  const url = buildProxyUrl({
+    server: "socks5://31.59.20.176:6754",
+    username: "ebywkquq",
+    password: "4d37d73jym2m",
+  });
+
+  assert.equal(url, "socks5://ebywkquq:4d37d73jym2m@31.59.20.176:6754");
+});
+
+test("normalizeProxyConfig adds a default protocol to static proxy settings", () => {
+  const proxy = normalizeProxyConfig(
+    {
+      server: "brd.superproxy.io:33335",
+      username: "customer",
+      password: "password",
+    },
+    "http",
+  );
+
+  assert.deepEqual(proxy, {
+    server: "http://brd.superproxy.io:33335",
+    username: "customer",
+    password: "password",
   });
 });
 

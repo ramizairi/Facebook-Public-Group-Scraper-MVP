@@ -13,15 +13,39 @@ export function parseProxyLine(line, defaultProtocol = "socks5") {
     return null;
   }
 
-  try {
-    const parsedUrl = new URL(normalized);
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(normalized)) {
+    try {
+      const parsedUrl = new URL(normalized);
+      return {
+        server: `${parsedUrl.protocol}//${parsedUrl.hostname}${parsedUrl.port ? `:${parsedUrl.port}` : ""}`,
+        username: parsedUrl.username || undefined,
+        password: parsedUrl.password || undefined,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  const csvParts = normalized.split(",").map((part) => part.trim());
+  if (csvParts.length >= 2) {
+    const [host, port, username, ...passwordParts] = csvParts;
+    if (host && port) {
+      return {
+        server: `${defaultProtocol}://${host}:${port}`,
+        username: username || undefined,
+        password: passwordParts.join(",").trim() || undefined,
+      };
+    }
+  }
+
+  const authAtMatch = normalized.match(/^([^:@/\s]+):([^@/\s]*)@([^:/\s]+):(\d+)$/);
+  if (authAtMatch) {
+    const [, username, password, host, port] = authAtMatch;
     return {
-      server: `${parsedUrl.protocol}//${parsedUrl.hostname}${parsedUrl.port ? `:${parsedUrl.port}` : ""}`,
-      username: parsedUrl.username || undefined,
-      password: parsedUrl.password || undefined,
+      server: `${defaultProtocol}://${host}:${port}`,
+      username: username || undefined,
+      password: password || undefined,
     };
-  } catch {
-    // Fall through to host:port and host:port:user:password parsing.
   }
 
   const parts = normalized.split(":");
@@ -42,6 +66,35 @@ export function parseProxyLine(line, defaultProtocol = "socks5") {
     username: username?.trim() || undefined,
     password: passwordParts.join(":").trim() || undefined,
   };
+}
+
+export function normalizeProxyConfig(proxy, defaultProtocol = "http") {
+  if (!proxy?.server) {
+    return null;
+  }
+
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(proxy.server)) {
+    return {
+      server: proxy.server,
+      username: proxy.username || undefined,
+      password: proxy.password || undefined,
+    };
+  }
+
+  const normalized = parseProxyLine(
+    [proxy.server, proxy.username || "", proxy.password || ""]
+      .filter((part, index) => index < 2 || part)
+      .join(":"),
+    defaultProtocol,
+  );
+
+  return (
+    normalized ?? {
+      server: proxy.server,
+      username: proxy.username || undefined,
+      password: proxy.password || undefined,
+    }
+  );
 }
 
 async function readProxyFiles(proxyPoolDir, defaultProtocol) {
@@ -146,7 +199,16 @@ export class ProxyPool {
     }
 
     this.sessionsOnCurrentProxy += 1;
-    const proxy = this.proxies[this.currentIndex];
+    const proxy = {
+      ...this.proxies[this.currentIndex],
+      _selection: {
+        mode: "pool",
+        index: this.currentIndex + 1,
+        count: this.proxies.length,
+        reason,
+        sessionCountOnProxy: this.sessionsOnCurrentProxy,
+      },
+    };
 
     this.logger.info({
       event: "proxy-selected",

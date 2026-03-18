@@ -2,6 +2,7 @@ import path from "node:path";
 import { config as loadDotEnv } from "dotenv";
 import { z } from "zod";
 
+import { normalizeProxyConfig } from "../browser/proxy-pool.js";
 import { normalizeGroupUrl } from "../utils/facebook-url.js";
 import { resolveAutoOutputDir } from "../utils/output-dir.js";
 
@@ -160,6 +161,16 @@ export function loadConfig(argv = process.argv.slice(2), cwd = process.cwd()) {
   const proxyUsername = noProxy ? "" : (pickFirstNonEmpty(cli["proxy-username"], env.PROXY_USERNAME) ?? "");
   const proxyPassword = noProxy ? "" : (pickFirstNonEmpty(cli["proxy-password"], env.PROXY_PASSWORD) ?? "");
   const proxyPoolDir = noProxy ? null : pickFirstNonEmpty(cli["proxy-pool-dir"], env.PROXY_POOL_DIR);
+  const normalizedStaticProxy = proxyServer
+    ? normalizeProxyConfig(
+        {
+          server: proxyServer,
+          username: proxyUsername || undefined,
+          password: proxyPassword || undefined,
+        },
+        "http",
+      )
+    : null;
 
   const config = ConfigSchema.parse({
     groupUrl,
@@ -207,13 +218,7 @@ export function loadConfig(argv = process.argv.slice(2), cwd = process.cwd()) {
       "https://api.ipify.org?format=json",
     ),
     navigationTimeoutMs: parseNumber(cli["navigation-timeout-ms"] ?? env.NAVIGATION_TIMEOUT_MS, 45_000),
-    proxy: proxyServer
-      ? {
-          server: proxyServer,
-          username: proxyUsername || undefined,
-          password: proxyPassword || undefined,
-        }
-      : null,
+    proxy: normalizedStaticProxy,
   });
 
   return {
