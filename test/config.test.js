@@ -13,6 +13,11 @@ const ENV_KEYS = [
   "SCHEDULE_TOTAL_MINUTES",
   "SCHEDULE_INTERVAL_MINUTES",
   "SCHEDULE_RUN_ANALYZER",
+  "SESSION_STATE_ENABLED",
+  "SESSION_STATE_DIR",
+  "SESSION_STATE_TTL_HOURS",
+  "SESSION_STATE_MIN_POSTS_TO_SAVE",
+  "SESSION_STATE_RESET_ON_BLOCK",
   "PROXY_SERVER",
   "PROXY_USERNAME",
   "PROXY_PASSWORD",
@@ -82,6 +87,7 @@ test("loadConfig uses .env defaults and lets CLI override them", async () => {
     assert.equal(config.proxyPoolDir, path.join(tempDir, "proxy", "socket5"));
     assert.equal(config.resume, true);
     assert.ok(config.outputDir.endsWith(path.join("output", "result")));
+    assert.ok(config.sessionStateDir.endsWith(path.join("output", "result", "session-state")));
   } finally {
     restoreEnv(previousEnv);
     await fs.rm(tempDir, { recursive: true, force: true });

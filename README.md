@@ -168,6 +168,11 @@ Supported `.env` variables:
 - `SCHEDULE_TOTAL_MINUTES`
 - `SCHEDULE_INTERVAL_MINUTES`
 - `SCHEDULE_RUN_ANALYZER`
+- `SESSION_STATE_ENABLED`
+- `SESSION_STATE_DIR`
+- `SESSION_STATE_TTL_HOURS`
+- `SESSION_STATE_MIN_POSTS_TO_SAVE`
+- `SESSION_STATE_RESET_ON_BLOCK`
 - `PROXY_SERVER`
 - `PROXY_USERNAME`
 - `PROXY_PASSWORD`
@@ -215,6 +220,11 @@ Supported CLI flags:
 - `--schedule-total-minutes`
 - `--schedule-interval-minutes`
 - `--schedule-run-analyzer=true|false`
+- `--session-state-enabled=true|false`
+- `--session-state-dir`
+- `--session-state-ttl-hours`
+- `--session-state-min-posts-to-save`
+- `--session-state-reset-on-block=true|false`
 - `--output-dir`
 - `--no-proxy`
 - `--proxy-server`
