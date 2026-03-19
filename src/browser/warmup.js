@@ -5,7 +5,11 @@ function hasCookieBootstrap(cookies) {
 
 export async function warmupFacebookSession(session, config, logger) {
   if (!config.homeWarmup) {
-    return;
+    return {
+      cookieNames: [],
+      bootstrapped: false,
+      skipped: true,
+    };
   }
 
   const { context, page } = session;
@@ -18,10 +22,18 @@ export async function warmupFacebookSession(session, config, logger) {
   }
 
   const cookies = await context.cookies();
+  const cookieNames = cookies.map((cookie) => cookie.name).sort();
+  const bootstrapped = hasCookieBootstrap(cookies);
   logger.info({
     event: "facebook-home-warmup",
-    cookieNames: cookies.map((cookie) => cookie.name).sort(),
-    bootstrapped: hasCookieBootstrap(cookies),
+    cookieNames,
+    bootstrapped,
     delayMs: config.homeWarmupDelayMs,
   });
+
+  return {
+    cookieNames,
+    bootstrapped,
+    skipped: false,
+  };
 }

@@ -1,6 +1,2 @@
-gate.decodo.com:10001:user-spxs0lesth-continent-af:Kv5h=G9fFrcy2ePg6u
-gate.decodo.com:10002:user-spxs0lesth-continent-af:Kv5h=G9fFrcy2ePg6u
-gate.decodo.com:10003:user-spxs0lesth-continent-af:Kv5h=G9fFrcy2ePg6u
-gate.decodo.com:10004:user-spxs0lesth-continent-af:Kv5h=G9fFrcy2ePg6u
-gate.decodo.com:10005:user-spxs0lesth-continent-af:Kv5h=G9fFrcy2ePg6u
-gate.decodo.com:10006:user-spxs0lesth-continent-af:Kv5h=G9fFrcy2ePg6u
+brd.superproxy.io:33335:brd-customer-hl_b4d20f7e-zone-residential_proxy2:3e0y1e1xrf39
+brd.superproxy.io:33335:brd-customer-hl_b4d20f7e-zone-residential_proxy1:x4bozr62uvwk
