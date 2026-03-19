@@ -262,6 +262,8 @@ export async function runScraper(config, outputManager, logger) {
   let noNewCycles = 0;
   let session = null;
   let networkTap = null;
+  let currentProxy = null;
+  let currentProxyAcceptedPosts = 0;
   const proxyPool = await ProxyPool.create(config, logger);
   const maxStartupAttempts =
     proxyPool?.hasProxies() && config.proxyRotateOnRetry
@@ -308,6 +310,8 @@ export async function runScraper(config, outputManager, logger) {
         reason,
         forceRotate: shouldRotateProxy(config, reason),
       }) ?? config.proxy;
+    currentProxy = selectedProxy;
+    currentProxyAcceptedPosts = 0;
 
     session = await launchBrowserSession(config, logger, selectedProxy);
     await warmupFacebookSession(session, config, logger);
@@ -315,6 +319,38 @@ export async function runScraper(config, outputManager, logger) {
     networkTap.attach(session.page);
     await navigateToGroup(session.page, config.groupUrl);
     await sleepWithJitter(config.minDelayMs, config.maxDelayMs);
+  };
+
+  const trackAcceptedPosts = (acceptedPosts) => {
+    currentProxyAcceptedPosts += Array.isArray(acceptedPosts) ? acceptedPosts.length : 0;
+  };
+
+  const finalizeProxySession = (details = {}) => {
+    if (!proxyPool?.hasProxies() || !currentProxy) {
+      currentProxy = null;
+      currentProxyAcceptedPosts = 0;
+      return;
+    }
+
+    if (details.reason) {
+      proxyPool.reportFailure(currentProxy, {
+        reason: details.reason,
+        posts: details.posts ?? currentProxyAcceptedPosts,
+      });
+    } else if (currentProxyAcceptedPosts >= config.proxyLowYieldPostThreshold) {
+      proxyPool.reportSuccess(currentProxy, {
+        reason: details.successReason ?? "usable-session",
+        posts: currentProxyAcceptedPosts,
+      });
+    } else if (currentProxyAcceptedPosts > 0) {
+      proxyPool.reportFailure(currentProxy, {
+        reason: "low-yield",
+        posts: currentProxyAcceptedPosts,
+      });
+    }
+
+    currentProxy = null;
+    currentProxyAcceptedPosts = 0;
   };
 
   try {
@@ -370,6 +406,7 @@ export async function runScraper(config, outputManager, logger) {
       }
 
       await outputManager.appendPosts(freshAccepted, freshUnfilteredAccepted);
+      trackAcceptedPosts(freshAccepted);
       const refreshedStats = await persistRunState({
         config,
         posts,
@@ -407,6 +444,11 @@ export async function runScraper(config, outputManager, logger) {
           break;
         }
 
+        finalizeProxySession({
+          reason:
+            initialBlockState.reason === "redirected-to-login" ? "redirected-to-login" : "login-wall",
+        });
+
         logger.info({
           event: "startup-retry",
           attempt: attempt + 1,
@@ -432,6 +474,9 @@ export async function runScraper(config, outputManager, logger) {
 
         await closeBrowserSession(session);
         session = null;
+        finalizeProxySession({
+          reason: retriable ? "proxy-error" : "blocked",
+        });
 
         if (retriable && attempt + 1 < maxStartupAttempts) {
           continue;
@@ -512,6 +557,7 @@ export async function runScraper(config, outputManager, logger) {
         networkStallRestarts = 0;
       }
       await outputManager.appendPosts(newlyAccepted, newlyUnfilteredAccepted);
+      trackAcceptedPosts(newlyAccepted);
 
       const blockState = await detectBlockState(session.page);
       stats = await persistRunState({
@@ -539,6 +585,7 @@ export async function runScraper(config, outputManager, logger) {
         metrics.recordRetry();
         archiveCurrentNetworkStats();
         networkTap.detach();
+        finalizeProxySession();
         await closeBrowserSession(session);
         session = null;
         networkTap = null;
@@ -577,6 +624,9 @@ export async function runScraper(config, outputManager, logger) {
           });
           archiveCurrentNetworkStats();
           networkTap.detach();
+          finalizeProxySession({
+            reason: blockState.reason === "redirected-to-login" ? "redirected-to-login" : "blocked",
+          });
           await closeBrowserSession(session);
           session = null;
           networkTap = null;
@@ -586,6 +636,9 @@ export async function runScraper(config, outputManager, logger) {
         }
 
         logger.info({ event: "stop", reason: blockState.reason });
+        finalizeProxySession({
+          reason: blockState.reason === "redirected-to-login" ? "redirected-to-login" : "blocked",
+        });
         break;
       }
 
@@ -610,10 +663,13 @@ export async function runScraper(config, outputManager, logger) {
         });
         archiveCurrentNetworkStats();
         networkTap.detach();
+        finalizeProxySession();
         await closeBrowserSession(session);
         await startSession("browser-recycle");
       }
     }
+
+    finalizeProxySession();
 
     const finalStats = await persistRunState({
       config,
@@ -630,6 +686,10 @@ export async function runScraper(config, outputManager, logger) {
       });
     }
 
+    if (proxyPool?.hasProxies()) {
+      await outputManager.writeDebugJson("proxy-pool-state.json", proxyPool.getStateSnapshot());
+    }
+
     return {
       posts,
       stats: finalStats,
@@ -641,6 +701,9 @@ export async function runScraper(config, outputManager, logger) {
         error: error instanceof Error ? error.message : String(error),
       });
     }
+    finalizeProxySession({
+      reason: isRetriableProxyError(error) ? "proxy-error" : undefined,
+    });
 
     if (networkTap) {
       archiveCurrentNetworkStats();
@@ -658,6 +721,12 @@ export async function runScraper(config, outputManager, logger) {
   } finally {
     if (networkTap) {
       networkTap.detach();
+    }
+
+    if (proxyPool?.hasProxies()) {
+      await outputManager
+        .writeDebugJson("proxy-pool-state.json", proxyPool.getStateSnapshot())
+        .catch(() => {});
     }
 
     await closeBrowserSession(session);

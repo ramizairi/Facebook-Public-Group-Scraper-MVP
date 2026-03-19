@@ -174,6 +174,9 @@ Supported `.env` variables:
 - `PROXY_POOL_DIR`
 - `PROXY_POOL_PROTOCOL`
 - `PROXY_MAX_SESSIONS_PER_PROXY`
+- `PROXY_QUARANTINE_MINUTES`
+- `PROXY_FAILURE_SCORE_THRESHOLD`
+- `PROXY_LOW_YIELD_POST_THRESHOLD`
 - `PROXY_ROTATE_ON_RETRY`
 - `PROXY_ROTATE_ON_RECYCLE`
 - `PROXY_ROTATE_ON_BLOCK`
@@ -220,6 +223,9 @@ Supported CLI flags:
 - `--proxy-pool-dir`
 - `--proxy-pool-protocol`
 - `--proxy-max-sessions-per-proxy`
+- `--proxy-quarantine-minutes`
+- `--proxy-failure-score-threshold`
+- `--proxy-low-yield-post-threshold`
 - `--proxy-rotate-on-retry=true|false`
 - `--proxy-rotate-on-recycle=true|false`
 - `--proxy-rotate-on-block=true|false`

@@ -120,6 +120,9 @@ const ConfigSchema = z
     proxyPoolDir: z.string().min(1).nullable(),
     proxyPoolProtocol: z.string().min(3),
     proxyMaxSessionsPerProxy: z.number().int().positive(),
+    proxyQuarantineMinutes: z.number().positive(),
+    proxyFailureScoreThreshold: z.number().int().positive(),
+    proxyLowYieldPostThreshold: z.number().int().positive(),
     proxyRotateOnRetry: z.boolean(),
     proxyRotateOnRecycle: z.boolean(),
     proxyRotateOnBlock: z.boolean(),
@@ -238,6 +241,18 @@ export function loadConfig(argv = process.argv.slice(2), cwd = process.cwd()) {
     proxyMaxSessionsPerProxy: parseNumber(
       cli["proxy-max-sessions-per-proxy"] ?? env.PROXY_MAX_SESSIONS_PER_PROXY,
       1,
+    ),
+    proxyQuarantineMinutes: parseNumber(
+      cli["proxy-quarantine-minutes"] ?? env.PROXY_QUARANTINE_MINUTES,
+      30,
+    ),
+    proxyFailureScoreThreshold: parseNumber(
+      cli["proxy-failure-score-threshold"] ?? env.PROXY_FAILURE_SCORE_THRESHOLD,
+      3,
+    ),
+    proxyLowYieldPostThreshold: parseNumber(
+      cli["proxy-low-yield-post-threshold"] ?? env.PROXY_LOW_YIELD_POST_THRESHOLD,
+      3,
     ),
     proxyRotateOnRetry: parseBoolean(cli["proxy-rotate-on-retry"] ?? env.PROXY_ROTATE_ON_RETRY, true),
     proxyRotateOnRecycle: parseBoolean(
