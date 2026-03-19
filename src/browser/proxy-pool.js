@@ -273,6 +273,21 @@ export class ProxyPool {
       return true;
     });
 
+    if (!candidateRecords.length && forceRotate) {
+      const relaxedCandidates = this.records.filter((record) => !this.isQuarantined(record, now));
+      if (relaxedCandidates.length) {
+        const current = this.records[this.currentIndex];
+        if (current && !this.isQuarantined(current, now)) {
+          this.logger.info({
+            event: "proxy-pool-no-alternative",
+            proxyCount: this.records.length,
+            currentIndex: this.currentIndex + 1,
+          });
+          return this.currentIndex;
+        }
+      }
+    }
+
     if (!candidateRecords.length) {
       const fallback = [...this.records].sort((left, right) => {
         if (left.quarantinedUntil !== right.quarantinedUntil) {
