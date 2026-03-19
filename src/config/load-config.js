@@ -104,6 +104,11 @@ const ConfigSchema = z
     scheduleTotalMinutes: z.number().positive().nullable(),
     scheduleIntervalMinutes: z.number().positive(),
     scheduleRunAnalyzer: z.boolean(),
+    sessionStateEnabled: z.boolean(),
+    sessionStateDir: z.string().min(1).nullable(),
+    sessionStateTtlHours: z.number().positive(),
+    sessionStateMinPostsToSave: z.number().int().nonnegative(),
+    sessionStateResetOnBlock: z.boolean(),
     startupRetries: z.number().int().nonnegative(),
     startupSettleMs: z.number().int().nonnegative(),
     homeWarmup: z.boolean(),
@@ -207,6 +212,26 @@ export function loadConfig(argv = process.argv.slice(2), cwd = process.cwd()) {
     ),
     scheduleRunAnalyzer: parseBoolean(
       cli["schedule-run-analyzer"] ?? env.SCHEDULE_RUN_ANALYZER,
+      true,
+    ),
+    sessionStateEnabled: parseBoolean(
+      cli["session-state-enabled"] ?? env.SESSION_STATE_ENABLED,
+      true,
+    ),
+    sessionStateDir: path.resolve(
+      cwd,
+      pickFirstNonEmpty(cli["session-state-dir"], env.SESSION_STATE_DIR, path.join(rawOutputDir, "session-state")),
+    ),
+    sessionStateTtlHours: parseNumber(
+      cli["session-state-ttl-hours"] ?? env.SESSION_STATE_TTL_HOURS,
+      72,
+    ),
+    sessionStateMinPostsToSave: parseNumber(
+      cli["session-state-min-posts-to-save"] ?? env.SESSION_STATE_MIN_POSTS_TO_SAVE,
+      1,
+    ),
+    sessionStateResetOnBlock: parseBoolean(
+      cli["session-state-reset-on-block"] ?? env.SESSION_STATE_RESET_ON_BLOCK,
       true,
     ),
     startupRetries: parseNumber(cli["startup-retries"] ?? env.STARTUP_RETRIES, 2),
