@@ -167,11 +167,18 @@ const ConfigSchema = z
     }
   });
 
-export function loadConfig(argv = process.argv.slice(2), cwd = process.cwd()) {
+export function loadConfig(
+  argv = process.argv.slice(2),
+  cwd = process.cwd(),
+  envOverrides = {},
+) {
   loadDotEnv({ path: path.join(cwd, ".env"), override: false, quiet: true });
 
   const cli = parseArgs(argv);
-  const env = process.env;
+  const env = {
+    ...process.env,
+    ...envOverrides,
+  };
 
   const rawGroupUrl = pickFirstNonEmpty(cli.url, env.GROUP_URL);
   const groupUrl = rawGroupUrl ? normalizeGroupUrl(rawGroupUrl) : null;

@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+import { persistCheckpoint } from "../core/checkpoint.js";
 import { safeJsonStringify } from "../utils/safe-json.js";
 
 function buildTimestampLabel() {
@@ -80,6 +81,10 @@ export class OutputManager {
 
   async writeStats(stats) {
     await fs.writeFile(this.paths.statsJson, safeJsonStringify(stats), "utf8");
+  }
+
+  async writeCheckpoint(checkpoint) {
+    await persistCheckpoint(this.paths.root, checkpoint);
   }
 
   async writeDebugJson(fileName, payload) {

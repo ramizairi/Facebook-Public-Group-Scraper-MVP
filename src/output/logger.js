@@ -1,14 +1,17 @@
 import pino from "pino";
 
 export function createLogger(logFile) {
-  return pino(
-    {
-      level: "info",
-      base: undefined,
-      timestamp: pino.stdTimeFunctions.isoTime,
-    },
-    pino.destination(logFile),
-  );
+  const options = {
+    level: "info",
+    base: undefined,
+    timestamp: pino.stdTimeFunctions.isoTime,
+  };
+
+  if (!logFile) {
+    return pino(options);
+  }
+
+  return pino(options, pino.destination(logFile));
 }
 
 export function printProgress(stats) {

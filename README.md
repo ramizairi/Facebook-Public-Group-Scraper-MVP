@@ -2,6 +2,8 @@
 
 Browser-backed Facebook public group scraper built with Node.js and Playwright. It targets public groups only, prefers structured data from the page/network surface, and uses DOM extraction only as a fallback.
 
+The project now includes an Apify Actor wrapper on top of the existing scraper, so the same codebase can run locally or on Apify with Actor input, Apify Proxy, dataset output, key-value storage, and Apify-native scheduling.
+
 ## What It Does
 
 - Reads `GROUP_URL` from `.env` by default and allows CLI overrides.
@@ -50,6 +52,12 @@ GROUP_URL=https://www.facebook.com/groups/123456789012345/
 ```
 
 ## Usage
+
+Universal entrypoint:
+
+```bash
+npm start
+```
 
 Run with `.env` defaults:
 
@@ -125,6 +133,57 @@ Generate an XLSX analysis from the latest scrape result:
 npm run analyze:xlsx
 ```
 
+## Apify Actor
+
+This repository now contains the files required for Apify Actor deployment:
+
+- [.actor/actor.json](/home/rami/Desktop/facebook-groupes-scrapper/.actor/actor.json)
+- [.actor/input_schema.json](/home/rami/Desktop/facebook-groupes-scrapper/.actor/input_schema.json)
+- [.actor/dataset_schema.json](/home/rami/Desktop/facebook-groupes-scrapper/.actor/dataset_schema.json)
+- [main.js](/home/rami/Desktop/facebook-groupes-scrapper/main.js)
+
+### What Changes On Apify
+
+- Actor input is loaded from the Apify input schema instead of `.env`.
+- Apify Proxy is used through Actor input `proxyConfiguration`, so local proxy files are not required on the platform.
+- Filtered normalized posts are pushed to the default dataset.
+- Snapshots and artifacts are stored in the default key-value store:
+  - `posts.json`
+  - `posts.unfiltered.json`
+  - `stats.json`
+  - `checkpoint.json`
+  - `OUTPUT`
+  - `debug-*`
+  - `analysis.rows.json` and `output.xlsx` when the analyzer runs
+
+### Apify Deployment
+
+Fastest local deployment path with the Apify CLI:
+
+```bash
+apify login
+apify push
+```
+
+If you prefer automatic rebuilds, create a new empty Actor in Apify Console and link this GitHub repository as the Actor source.
+
+### Recommended Apify Usage
+
+- Use Apify platform schedules for recurring cloud runs.
+- Leave internal `scheduleTotalMinutes` empty unless you specifically want one long Actor run with multiple scrape cycles.
+- Set `GEMINI_API_KEY` in the Actor environment variables if you enable the XLSX analyzer.
+- Configure proxies from the Actor input `proxyConfiguration` field. If you use Apify Proxy, you can optionally set `proxyCountryCode` too.
+
+### Local Actor Smoke Test
+
+If you want to test the Actor wrapper locally before pushing:
+
+```bash
+apify run
+```
+
+The Actor runtime uses a separate local work directory for checkpoints and session state, so it does not reuse your normal local `output/result` folder.
+
 ## Docker
 
 Build the image:
@@ -157,6 +216,7 @@ Notes:
 - When you bind-mount `./output`, run the container with your host UID/GID so the scraper can write logs and JSON files without root-owned permission issues.
 - If you still need `sudo` for Docker access, export the variables first and then use `sudo -E docker compose ...`.
 - Docker support is additive only; the local Node.js workflow remains unchanged.
+- On Apify, the same Docker image starts through [main.js](/home/rami/Desktop/facebook-groupes-scrapper/main.js), which switches automatically between the local CLI workflow and the Actor workflow based on the runtime environment.
 
 ## Config
 

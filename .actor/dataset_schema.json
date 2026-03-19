@@ -1,0 +1,125 @@
+{
+  "actorSpecification": 1,
+  "fields": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": ["string", "null"],
+        "title": "Post ID",
+        "description": "Stable Facebook post identifier when available."
+      },
+      "url": {
+        "type": ["string", "null"],
+        "title": "Post URL",
+        "description": "Canonical Facebook group post URL."
+      },
+      "groupUrl": {
+        "type": ["string", "null"],
+        "title": "Group URL",
+        "description": "Canonical Facebook group URL that the post belongs to."
+      },
+      "authorName": {
+        "type": ["string", "null"],
+        "title": "Author name",
+        "description": "Visible post author name when exposed in the page or network payload."
+      },
+      "authorId": {
+        "type": ["string", "null"],
+        "title": "Author ID",
+        "description": "Facebook author identifier when available."
+      },
+      "createdAt": {
+        "type": ["string", "null"],
+        "title": "Created at",
+        "description": "ISO timestamp of the post creation time when available."
+      },
+      "text": {
+        "type": ["string", "null"],
+        "title": "Post text",
+        "description": "Best-effort post body text."
+      },
+      "media": {
+        "type": "array",
+        "title": "Media",
+        "description": "Best-effort list of media URLs linked to the post.",
+        "items": {
+          "type": "string"
+        }
+      },
+      "reactionCount": {
+        "type": ["number", "null"],
+        "title": "Reaction count",
+        "description": "Best-effort total reaction count."
+      },
+      "commentCount": {
+        "type": ["number", "null"],
+        "title": "Comment count",
+        "description": "Best-effort total comment count."
+      },
+      "shareCount": {
+        "type": ["number", "null"],
+        "title": "Share count",
+        "description": "Best-effort total share count."
+      },
+      "sourceType": {
+        "type": "string",
+        "title": "Source type",
+        "description": "Extraction source for the accepted post record.",
+        "enum": ["network", "dom"]
+      },
+      "rawFragment": {
+        "type": ["object", "null"],
+        "title": "Raw fragment",
+        "description": "Small debug-safe reference to the payload fragment that produced the normalized post."
+      }
+    },
+    "required": ["url", "groupUrl", "media", "sourceType"]
+  },
+  "views": {
+    "overview": {
+      "title": "Overview",
+      "transformation": {
+        "fields": [
+          "createdAt",
+          "authorName",
+          "text",
+          "reactionCount",
+          "commentCount",
+          "shareCount",
+          "sourceType",
+          "url"
+        ]
+      },
+      "display": {
+        "component": "table",
+        "properties": {
+          "createdAt": {
+            "label": "Created",
+            "format": "date"
+          },
+          "url": {
+            "label": "Post URL",
+            "format": "link"
+          },
+          "reactionCount": {
+            "label": "Reactions",
+            "format": "number"
+          },
+          "commentCount": {
+            "label": "Comments",
+            "format": "number"
+          },
+          "shareCount": {
+            "label": "Shares",
+            "format": "number"
+          },
+          "text": {
+            "label": "Text",
+            "format": "text"
+          }
+        }
+      }
+    }
+  }
+}
