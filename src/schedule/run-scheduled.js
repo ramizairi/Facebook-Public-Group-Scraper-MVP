@@ -65,7 +65,7 @@ export async function runScheduledWorkflow({
   let analysisResult = null;
   if (config.scheduleRunAnalyzer) {
     logger.info({ event: "schedule-analysis-start", cycleCount: cycle });
-    analysisResult = await runAnalysis();
+    analysisResult = await runAnalysis(lastScrapeResult);
     logger.info({
       event: "schedule-analysis-complete",
       outputPath: analysisResult.outputPath,

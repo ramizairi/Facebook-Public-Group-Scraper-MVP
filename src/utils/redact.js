@@ -42,8 +42,9 @@ export function summarizeProxyForConsole(proxy) {
 }
 
 export function sanitizeConfigForLog(config) {
+  const { apifyProxyConfiguration, ...rest } = config;
   const sanitized = {
-    ...config,
+    ...rest,
     proxy: redactProxyConfig(config.proxy),
   };
 

@@ -1,3 +1,5 @@
+import { pathToFileURL } from "node:url";
+
 import { loadConfig } from "./config/load-config.js";
 import { createLogger } from "./output/logger.js";
 import { OutputManager } from "./output/manager.js";
@@ -7,8 +9,11 @@ import { runScraper } from "./core/run-scraper.js";
 import { runAnalysisWorkflow } from "./analyze/index.js";
 import { runScheduledWorkflow } from "./schedule/run-scheduled.js";
 
-async function main() {
-  const config = loadConfig();
+export async function runCliMain(
+  argv = process.argv.slice(2),
+  cwd = process.cwd(),
+) {
+  const config = loadConfig(argv, cwd);
   const outputManager = await OutputManager.create(config.outputDir);
   const logger = createLogger(outputManager.paths.logFile);
   logger.info({
@@ -27,7 +32,10 @@ async function main() {
       logger,
       outputManager,
       runScraper,
-      runAnalysis: () => runAnalysisWorkflow([], config.cwd),
+      runAnalysis: (scrapeResult) =>
+        runAnalysisWorkflow([], config.cwd, {
+          posts: scrapeResult?.posts,
+        }),
     });
 
     console.log(
@@ -40,7 +48,9 @@ async function main() {
   console.log(`completed | posts=${result.posts.length} | output=${config.outputDir}`);
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exitCode = 1;
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  runCliMain().catch((error) => {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  });
+}

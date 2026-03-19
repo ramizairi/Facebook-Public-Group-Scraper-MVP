@@ -35,9 +35,16 @@ const logger = {
   },
 };
 
-export async function runAnalysisWorkflow(argv = process.argv.slice(2), cwd = process.cwd()) {
-  const config = loadAnalysisConfig(argv, cwd);
-  const posts = await loadAnalysisPosts(config);
+export async function runAnalysisWorkflow(
+  argv = process.argv.slice(2),
+  cwd = process.cwd(),
+  options = {},
+) {
+  const config = loadAnalysisConfig(argv, cwd, {
+    envOverrides: options.envOverrides,
+    requireInputFile: !Array.isArray(options.posts),
+  });
+  const posts = Array.isArray(options.posts) ? options.posts : await loadAnalysisPosts(config);
   const analyses = await analyzePostsWithGemini(posts, config, logger);
   const rows = posts.map((post, index) => buildRow(post, analyses[index]));
   const outputPath = await writeAnalysisWorkbook(rows, config);

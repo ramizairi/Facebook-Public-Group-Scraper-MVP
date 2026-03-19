@@ -13,4 +13,4 @@ RUN mkdir -p /app/output && chown -R pwuser:pwuser /app
 
 USER pwuser
 
-ENTRYPOINT ["node", "src/index.js"]
+ENTRYPOINT ["node", "main.js"]

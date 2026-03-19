@@ -1,10 +1,10 @@
-import { buildCheckpoint, loadCheckpoint, persistCheckpoint } from "./checkpoint.js";
+import { buildCheckpoint, loadCheckpoint } from "./checkpoint.js";
 import { DedupStore } from "./dedup-store.js";
 import { detectBlockState } from "./block-detection.js";
 import { MetricsTracker } from "./metrics.js";
 import { normalizeCandidate } from "./normalize.js";
 import { isRetriableProxyError } from "../browser/proxy-errors.js";
-import { ProxyPool } from "../browser/proxy-pool.js";
+import { normalizeProxyConfig, ProxyPool } from "../browser/proxy-pool.js";
 import { SessionStateStore } from "../browser/session-state.js";
 import { closeBrowserSession, launchBrowserSession } from "../browser/session.js";
 import { warmupFacebookSession } from "../browser/warmup.js";
@@ -165,18 +165,18 @@ async function persistRunState({ config, posts, unfilteredPosts, outputManager, 
     networkStats: networkTap.getStats(),
   });
   stats.unfilteredUniquePosts = unfilteredPosts.length;
+  const checkpoint = buildCheckpoint({
+    config,
+    posts,
+    unfilteredPosts,
+    stats,
+  });
 
   await outputManager.writePostsJson(posts, unfilteredPosts);
   await outputManager.writeStats(stats);
-  await persistCheckpoint(
-    config.outputDir,
-    buildCheckpoint({
-      config,
-      posts,
-      unfilteredPosts,
-      stats,
-    }),
-  );
+  if (typeof outputManager.writeCheckpoint === "function") {
+    await outputManager.writeCheckpoint(checkpoint);
+  }
 
   return stats;
 }
@@ -227,6 +227,42 @@ function sanitizeStoredPosts(rawPosts, groupUrl, options = {}) {
   return sanitized;
 }
 
+function createProxySessionId(sequence = 1) {
+  const randomPart = Math.random().toString(36).slice(2, 10);
+  return `fbgrp_${sequence}_${Date.now().toString(36)}_${randomPart}`;
+}
+
+async function acquireApifyProxy(config, state, reason) {
+  if (!config.apifyProxyConfiguration) {
+    return null;
+  }
+
+  const shouldRotate = !state.sessionId || shouldRotateProxy(config, reason);
+  if (shouldRotate) {
+    state.sequence += 1;
+    state.sessionId = createProxySessionId(state.sequence);
+  }
+
+  const proxyUrl = await config.apifyProxyConfiguration.newUrl(state.sessionId);
+  if (!proxyUrl) {
+    return null;
+  }
+
+  const normalized = normalizeProxyConfig({ server: proxyUrl }, "http");
+  if (!normalized) {
+    return null;
+  }
+
+  return {
+    ...normalized,
+    _selection: {
+      mode: "apify",
+      reason,
+      sessionId: state.sessionId,
+    },
+  };
+}
+
 export async function runScraper(config, outputManager, logger) {
   const checkpoint = config.resume ? await loadCheckpoint(config.outputDir) : null;
   const checkpointMatchesGroup =
@@ -267,6 +303,10 @@ export async function runScraper(config, outputManager, logger) {
   let currentProxyAcceptedPosts = 0;
   let currentSessionBootstrapped = false;
   let currentSessionLoadedState = false;
+  const apifyProxyState = {
+    sessionId: null,
+    sequence: 0,
+  };
   const proxyPool = await ProxyPool.create(config, logger);
   const sessionStateStore = await SessionStateStore.create(config, logger);
   const maxStartupAttempts =
@@ -313,7 +353,15 @@ export async function runScraper(config, outputManager, logger) {
       proxyPool?.acquire({
         reason,
         forceRotate: shouldRotateProxy(config, reason),
-      }) ?? config.proxy;
+      }) ??
+      (config.apifyProxyConfiguration
+        ? await acquireApifyProxy(config, apifyProxyState, reason)
+        : config.proxy);
+
+    if (config.apifyProxyConfiguration && !selectedProxy) {
+      throw new Error("Apify proxy configuration did not return a usable proxy URL.");
+    }
+
     currentProxy = selectedProxy;
     currentProxyAcceptedPosts = 0;
     currentSessionBootstrapped = false;
@@ -478,17 +526,18 @@ export async function runScraper(config, outputManager, logger) {
           break;
         }
 
-        finalizeProxySession({
-          reason:
-            initialBlockState.reason === "redirected-to-login" ? "redirected-to-login" : "login-wall",
-        });
+        const blockedProxy = currentProxy;
         if (
           sessionStateStore &&
           config.sessionStateResetOnBlock &&
           (initialBlockState.reason === "redirected-to-login" || initialBlockState.reason === "facebook-login-wall")
         ) {
-          await sessionStateStore.clear(currentProxy, initialBlockState.reason);
+          await sessionStateStore.clear(blockedProxy, initialBlockState.reason);
         }
+        finalizeProxySession({
+          reason:
+            initialBlockState.reason === "redirected-to-login" ? "redirected-to-login" : "login-wall",
+        });
 
         logger.info({
           event: "startup-retry",
