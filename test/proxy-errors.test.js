@@ -17,6 +17,11 @@ test("isRetriableProxyError matches tunnel and proxy connection failures", () =>
     ),
     true,
   );
+
+  assert.equal(
+    isRetriableProxyError(new Error('page.goto: net::ERR_ABORTED at https://www.facebook.com/')),
+    true,
+  );
 });
 
 test("isRetriableProxyError ignores unrelated application errors", () => {
