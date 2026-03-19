@@ -100,3 +100,37 @@ test("proxy pool rotates across proxies on forced session changes", async () => 
     await fs.rm(tempDir, { recursive: true, force: true });
   }
 });
+
+test("proxy pool quarantines login-wall proxies and skips them on the next rotation", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "fb-proxy-pool-test-"));
+
+  try {
+    await fs.writeFile(
+      path.join(tempDir, "pool.txt"),
+      ["1.1.1.1:1000:user-a:pass-a", "2.2.2.2:2000:user-b:pass-b"].join("\n"),
+      "utf8",
+    );
+
+    const pool = await ProxyPool.create(
+      {
+        proxyPoolDir: tempDir,
+        proxyPoolProtocol: "http",
+        proxyMaxSessionsPerProxy: 5,
+        proxyQuarantineMinutes: 30,
+        proxyFailureScoreThreshold: 3,
+        proxyLowYieldPostThreshold: 3,
+      },
+      logger,
+    );
+
+    const first = pool.acquire({ reason: "initial" });
+    pool.reportFailure(first, { reason: "redirected-to-login" });
+
+    const second = pool.acquire({ reason: "startup-retry", forceRotate: true });
+
+    assert.equal(first.server, "http://1.1.1.1:1000");
+    assert.equal(second.server, "http://2.2.2.2:2000");
+  } finally {
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
