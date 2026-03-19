@@ -2,7 +2,12 @@ import { chromium } from "playwright";
 import { prepareBrowserProxy } from "./proxy-bridge.js";
 import { redactProxyConfig, summarizeProxyForConsole } from "../utils/redact.js";
 
-export async function launchBrowserSession(config, logger, proxyOverride = config.proxy) {
+export async function launchBrowserSession(
+  config,
+  logger,
+  proxyOverride = config.proxy,
+  sessionState = null,
+) {
   const preparedProxy = await prepareBrowserProxy(proxyOverride, logger);
   const browser = await chromium.launch({
     headless: config.headless,
@@ -16,6 +21,7 @@ export async function launchBrowserSession(config, logger, proxyOverride = confi
     viewport: { width: 1440, height: 1100 },
     userAgent: config.userAgent,
     colorScheme: "light",
+    ...(sessionState?.statePath ? { storageState: sessionState.statePath } : {}),
     ...(config.browserTimezone ? { timezoneId: config.browserTimezone } : {}),
   });
   await context.setExtraHTTPHeaders({
@@ -42,6 +48,7 @@ export async function launchBrowserSession(config, logger, proxyOverride = confi
     event: "browser-session-started",
     headless: config.headless,
     proxy: redactProxyConfig(proxyOverride),
+    sessionStateLoaded: Boolean(sessionState?.statePath),
   });
 
   if (proxyOverride?.server) {
@@ -67,6 +74,7 @@ export async function launchBrowserSession(config, logger, proxyOverride = confi
     browser,
     context,
     page,
+    loadedSessionState: sessionState,
     cleanupProxy: preparedProxy.cleanup,
   };
 }
