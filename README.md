@@ -355,4 +355,6 @@ Example `posts.json` item:
 
 ## License
 
-[MIT](LICENSE)
+This repository is released under the [MIT License](LICENSE).
+
+Copyright (c) 2026 Ramzi Airi (RidyX)

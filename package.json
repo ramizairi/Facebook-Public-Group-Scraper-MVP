@@ -3,7 +3,15 @@
   "version": "0.1.0",
   "description": "Production-oriented Facebook public group scraper with Playwright, proxy support, checkpointing, and Gemini XLSX export.",
   "license": "MIT",
-  "author": "RidyX",
+  "author": "Ramzi Airi (RidyX)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ramizairi/Facebook-Public-Group-Scraper-MVP.git"
+  },
+  "homepage": "https://github.com/ramizairi/Facebook-Public-Group-Scraper-MVP",
+  "bugs": {
+    "url": "https://github.com/ramizairi/Facebook-Public-Group-Scraper-MVP/issues"
+  },
   "type": "module",
   "main": "main.js",
   "scripts": {
