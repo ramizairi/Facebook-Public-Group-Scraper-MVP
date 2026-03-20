@@ -1,15 +1,15 @@
-import { buildCheckpoint, loadCheckpoint, persistCheckpoint } from "./checkpoint.js";
+import { buildCheckpoint, loadCheckpoint } from "./checkpoint.js";
 import { DedupStore } from "./dedup-store.js";
 import { detectBlockState } from "./block-detection.js";
 import { MetricsTracker } from "./metrics.js";
 import { normalizeCandidate } from "./normalize.js";
 import { isRetriableProxyError } from "../browser/proxy-errors.js";
-import { ProxyPool } from "../browser/proxy-pool.js";
+import { normalizeProxyConfig, ProxyPool } from "../browser/proxy-pool.js";
 import { SessionStateStore } from "../browser/session-state.js";
 import { closeBrowserSession, launchBrowserSession } from "../browser/session.js";
 import { warmupFacebookSession } from "../browser/warmup.js";
 import { sleepWithJitter } from "../utils/delay.js";
-import { sameGroupUrl } from "../utils/facebook-url.js";
+import { extractPostInfoFromUrl, sameGroupUrl } from "../utils/facebook-url.js";
 import { elapsedMs, minutesToMs } from "../utils/time.js";
 import { NetworkTap } from "../extract/network-tap.js";
 import {
@@ -59,12 +59,39 @@ async function settleStartupPage(page, config) {
   await dismissPotentialOverlays(page);
 }
 
-async function advanceFeed(page, config) {
+async function recoverFeedContextIfNavigated(page, config, logger) {
+  const currentUrl = page.url();
+  const postInfo = extractPostInfoFromUrl(currentUrl);
+  if (!postInfo) {
+    return false;
+  }
+
+  logger.info({
+    event: "feed-context-recover",
+    reason: "navigated-to-post",
+    currentUrl,
+    targetGroupUrl: config.groupUrl,
+  });
+
+  await page.goBack({ waitUntil: "domcontentloaded" }).catch(() => {});
+  await dismissPotentialOverlays(page);
+
+  if (extractPostInfoFromUrl(page.url())) {
+    await navigateToGroup(page, config.groupUrl);
+    await settleStartupPage(page, config);
+  }
+
+  return true;
+}
+
+async function advanceFeed(page, config, logger) {
   const beforeState = await readDomFeedState(page, { groupUrl: config.groupUrl });
 
   await dismissPotentialOverlays(page);
   await prepareDomExtraction(page);
+  await recoverFeedContextIfNavigated(page, config, logger);
   await nudgeDomFeed(page, { groupUrl: config.groupUrl });
+  await recoverFeedContextIfNavigated(page, config, logger);
   await page.waitForTimeout(250).catch(() => {});
   await page.mouse.wheel(0, 2_600).catch(() => {});
   await page.waitForTimeout(250).catch(() => {});
@@ -80,6 +107,7 @@ async function advanceFeed(page, config) {
   await page.keyboard.press("End").catch(() => {});
   await sleepWithJitter(config.minDelayMs, config.maxDelayMs);
   await dismissPotentialOverlays(page);
+  await recoverFeedContextIfNavigated(page, config, logger);
 
   const afterState = await readDomFeedState(page, { groupUrl: config.groupUrl });
   return {
@@ -165,18 +193,18 @@ async function persistRunState({ config, posts, unfilteredPosts, outputManager, 
     networkStats: networkTap.getStats(),
   });
   stats.unfilteredUniquePosts = unfilteredPosts.length;
+  const checkpoint = buildCheckpoint({
+    config,
+    posts,
+    unfilteredPosts,
+    stats,
+  });
 
   await outputManager.writePostsJson(posts, unfilteredPosts);
   await outputManager.writeStats(stats);
-  await persistCheckpoint(
-    config.outputDir,
-    buildCheckpoint({
-      config,
-      posts,
-      unfilteredPosts,
-      stats,
-    }),
-  );
+  if (typeof outputManager.writeCheckpoint === "function") {
+    await outputManager.writeCheckpoint(checkpoint);
+  }
 
   return stats;
 }
@@ -190,8 +218,16 @@ function reachedRuntimeLimit(config, startedAtMs) {
   return elapsedMs(startedAtMs) >= runtimeLimitMs;
 }
 
-function shouldRecycleBrowser(config, networkTap) {
+export function shouldRecycleBrowser(config, networkTap) {
+  if (config.cookiesFile) {
+    return false;
+  }
+
   return networkTap.getStats().totalRequests >= config.browserRecycleRequests;
+}
+
+export function shouldRecycleOnNetworkStall(config) {
+  return !config.cookiesFile;
 }
 
 function shouldRotateProxy(config, reason) {
@@ -225,6 +261,42 @@ function sanitizeStoredPosts(rawPosts, groupUrl, options = {}) {
   }
 
   return sanitized;
+}
+
+function createProxySessionId(sequence = 1) {
+  const randomPart = Math.random().toString(36).slice(2, 10);
+  return `fbgrp_${sequence}_${Date.now().toString(36)}_${randomPart}`;
+}
+
+async function acquireApifyProxy(config, state, reason) {
+  if (!config.apifyProxyConfiguration) {
+    return null;
+  }
+
+  const shouldRotate = !state.sessionId || shouldRotateProxy(config, reason);
+  if (shouldRotate) {
+    state.sequence += 1;
+    state.sessionId = createProxySessionId(state.sequence);
+  }
+
+  const proxyUrl = await config.apifyProxyConfiguration.newUrl(state.sessionId);
+  if (!proxyUrl) {
+    return null;
+  }
+
+  const normalized = normalizeProxyConfig({ server: proxyUrl }, "http");
+  if (!normalized) {
+    return null;
+  }
+
+  return {
+    ...normalized,
+    _selection: {
+      mode: "apify",
+      reason,
+      sessionId: state.sessionId,
+    },
+  };
 }
 
 export async function runScraper(config, outputManager, logger) {
@@ -267,6 +339,10 @@ export async function runScraper(config, outputManager, logger) {
   let currentProxyAcceptedPosts = 0;
   let currentSessionBootstrapped = false;
   let currentSessionLoadedState = false;
+  const apifyProxyState = {
+    sessionId: null,
+    sequence: 0,
+  };
   const proxyPool = await ProxyPool.create(config, logger);
   const sessionStateStore = await SessionStateStore.create(config, logger);
   const maxStartupAttempts =
@@ -313,7 +389,15 @@ export async function runScraper(config, outputManager, logger) {
       proxyPool?.acquire({
         reason,
         forceRotate: shouldRotateProxy(config, reason),
-      }) ?? config.proxy;
+      }) ??
+      (config.apifyProxyConfiguration
+        ? await acquireApifyProxy(config, apifyProxyState, reason)
+        : config.proxy);
+
+    if (config.apifyProxyConfiguration && !selectedProxy) {
+      throw new Error("Apify proxy configuration did not return a usable proxy URL.");
+    }
+
     currentProxy = selectedProxy;
     currentProxyAcceptedPosts = 0;
     currentSessionBootstrapped = false;
@@ -478,17 +562,18 @@ export async function runScraper(config, outputManager, logger) {
           break;
         }
 
-        finalizeProxySession({
-          reason:
-            initialBlockState.reason === "redirected-to-login" ? "redirected-to-login" : "login-wall",
-        });
+        const blockedProxy = currentProxy;
         if (
           sessionStateStore &&
           config.sessionStateResetOnBlock &&
           (initialBlockState.reason === "redirected-to-login" || initialBlockState.reason === "facebook-login-wall")
         ) {
-          await sessionStateStore.clear(currentProxy, initialBlockState.reason);
+          await sessionStateStore.clear(blockedProxy, initialBlockState.reason);
         }
+        finalizeProxySession({
+          reason:
+            initialBlockState.reason === "redirected-to-login" ? "redirected-to-login" : "login-wall",
+        });
 
         logger.info({
           event: "startup-retry",
@@ -563,7 +648,7 @@ export async function runScraper(config, outputManager, logger) {
       }
 
       metrics.recordCycle();
-      const feedAdvance = await advanceFeed(session.page, config);
+      const feedAdvance = await advanceFeed(session.page, config, logger);
 
       const cycleCandidates = collectNetworkCandidates(networkTap, outputManager, config);
       const structuredCandidates = await cycleCandidates;
@@ -630,6 +715,7 @@ export async function runScraper(config, outputManager, logger) {
 
       if (
         !blockState.blocked &&
+        shouldRecycleOnNetworkStall(config) &&
         networkStallCycles >= config.networkStallRecycleCycles &&
         networkStallRestarts < config.maxNetworkStallRestarts
       ) {

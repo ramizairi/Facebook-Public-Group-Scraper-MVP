@@ -1,0 +1,11 @@
+{
+  "actorSpecification": 1,
+  "name": "facebook-public-group-scraper-mvp",
+  "title": "Facebook Public Group Scraper MVP",
+  "version": "0.1",
+  "dockerfile": "../Dockerfile",
+  "input": "./input_schema.json",
+  "storages": {
+    "dataset": "./dataset_schema.json"
+  }
+}
