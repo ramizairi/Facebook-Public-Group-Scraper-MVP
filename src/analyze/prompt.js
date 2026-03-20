@@ -9,29 +9,56 @@ function formatPost(post, index) {
   ].join("\n");
 }
 
-export function buildBatchPrompt(posts) {
+export function buildPlanPrompt(posts) {
   return `
-You extract structured ride-sharing data from Tunisian Facebook group posts.
+You are designing the best possible spreadsheet schema for a Facebook group.
 
-The posts may be written in:
-- Tunisian Arabic
-- French
-- Arabizi / Tunisian Latin transliteration
-- mixtures of all of them
+Your job:
+- infer what this group is mainly about from the sample posts
+- choose a small set of useful dynamic columns for spreadsheet analysis
+- make the columns fit this group, not only ride-sharing groups
 
-Important interpretation rules:
-- Treat Tunisian place names and common transport wording carefully.
-- "Je cherche", "nlawj", "nheb", "cherche une place", "blassa", "place" usually indicates a ride request.
-- "place disponible", "dispo", "disponible", "encore une place", "retour" often indicates a ride offer.
-- Do not confuse phone numbers with price.
-- Price must be explicit money in Tunisian dinars or a clearly monetary number.
-- Number of passengers must be explicit. Do not infer from phone numbers or times.
-- Gender should be inferred from the profile name only when reasonably likely. Otherwise return "unknown".
-- from_city should be the departure city only.
-- from_area should be a more specific neighborhood/area only. Do not duplicate the city there unless the post itself uses the city as the only departure area phrase.
-- to_area should capture the destination phrase, area, or city.
-- preferred_departure_time should be normalized when possible. Examples: "6.30" -> "06:30", "a partir de 15h" -> "15:00+", "demain matin" -> "morning".
-- If something is not clear, return null.
+Rules:
+- choose 4 to 8 dynamic columns only
+- keep keys in snake_case
+- labels should be human-friendly for Excel
+- allowed column types are string, number, boolean
+- prefer columns that are useful across many posts in this specific group
+- avoid duplicate or overlapping columns
+- do not include the fixed columns that already exist:
+  post_url, created_at, calendar_week, weekday, profile_name, post, gemini_summary, gemini_confidence
+- for Tunisian content, treat French, Tunisian Arabic, and Arabizi carefully
+- if this group is clearly ride-sharing, marketplace, jobs, housing, services, or local community, reflect that in the chosen columns
+
+Return JSON only and match the schema exactly.
+
+Sample posts:
+${posts.map((post, index) => formatPost(post, index)).join("\n\n---\n\n")}
+`.trim();
+}
+
+export function buildBatchPrompt(posts, plan) {
+  return `
+You extract structured spreadsheet rows from Facebook group posts.
+
+Group type: ${plan.group_type}
+Group extraction summary: ${plan.summary}
+
+Dynamic columns to extract:
+${plan.columns
+  .map((column) => `- ${column.key} (${column.type}): ${column.description}`)
+  .join("\n")}
+
+Rules:
+- work only from the provided post data
+- posts may be written in Tunisian Arabic, French, Arabizi, English, or mixed language
+- return null when a value is not explicit or cannot be inferred safely
+- keep summaries short and factual
+- confidence must be from 0 to 1
+- values must match the requested types exactly
+- do not invent fields outside the schema
+- if the group is ride-sharing, distinguish offer vs request carefully
+- if the group is marketplace/jobs/housing/services, extract the most relevant details for that type of post
 
 Return JSON only and match the schema exactly.
 

@@ -15,10 +15,10 @@ The project now includes an Apify Actor wrapper on top of the existing scraper, 
 - Captures relevant network/document payloads and extracts posts from embedded JSON or response bodies first.
 - Falls back to `[role="feed"] [role="article"]` DOM parsing when structured extraction yields nothing new.
 - Deduplicates posts by stable IDs and canonical URLs.
-- Continuously writes filtered outputs as `posts.json` and `posts.jsonl`, plus legacy-style unfiltered outputs as `posts.unfiltered.json` and `posts.unfiltered.jsonl`, along with `stats.json`, `checkpoint.json`, logs, and debug artifacts.
+- Continuously writes a clean export as `output.json`, plus the full normal post archive as `posts.json` and `posts.jsonl`, along with `stats.json`, `checkpoint.json`, logs, and debug artifacts.
 - Supports resume mode with `--resume`.
 - Supports proxy verification mode with `--test-proxy`.
-- Includes a separate Gemini-to-XLSX analyzer that reads saved `posts.json` results and writes `output/xlsx/output.xlsx` without touching scraper runtime performance.
+- Includes a separate Gemini-to-XLSX analyzer that reads the saved clean export from `output.json`, infers the group type and useful spreadsheet columns, and writes a dynamic multi-sheet workbook to `output/xlsx/output.xlsx` without touching scraper runtime performance.
 
 ## Limitations
 
@@ -165,6 +165,13 @@ Generate an XLSX analysis from the latest scrape result:
 npm run analyze:xlsx
 ```
 
+The analyzer can:
+
+- infers the group type from the saved posts
+- asks Gemini to choose useful dynamic columns for that specific group
+- writes a main sheet with fixed post columns plus group-specific extracted columns
+- adds `group_info` and `column_map` sheets so the workbook explains its own schema
+
 ## Apify Actor
 
 This repository now contains the files required for Apify Actor deployment:
@@ -180,8 +187,8 @@ This repository now contains the files required for Apify Actor deployment:
 - Apify Proxy is used through Actor input `proxyConfiguration`, so local proxy files are not required on the platform.
 - Filtered normalized posts are pushed to the default dataset.
 - Snapshots and artifacts are stored in the default key-value store:
+  - `output.json`
   - `posts.json`
-  - `posts.unfiltered.json`
   - `stats.json`
   - `checkpoint.json`
   - `OUTPUT`
@@ -362,10 +369,9 @@ Useful npm scripts:
 Each run writes into the configured output directory:
 
 - default path: `output/result`
-- `posts.json`: full normalized post array
-- `posts.jsonl`: append-friendly line-delimited post stream
-- `posts.unfiltered.json`: legacy-style post array with sparse/null-heavy posts preserved
-- `posts.unfiltered.jsonl`: append-friendly legacy line stream
+- `output.json`: clean export with `url`, `group_url`, `author_name`, `created_at`, `text`, `reaction_count`, `comment_count`, and `share_count`
+- `posts.json`: full normal post array used as the main archive
+- `posts.jsonl`: append-friendly line-delimited main archive
 - `stats.json`: run metrics and throughput
 - `checkpoint.json`: resumable state with collected posts
 - `logs/run.log`: structured JSON logs
@@ -373,7 +379,10 @@ Each run writes into the configured output directory:
 
 Analyzer output:
 
-- `output/xlsx/output.xlsx`: spreadsheet with direct fields from `posts.json` plus Gemini-derived Tunisian ride-share fields
+- `output/xlsx/output.xlsx`: workbook with:
+  - a main analysis sheet named from the inferred group type
+  - a `group_info` sheet with Gemini's group summary
+  - a `column_map` sheet listing the dynamic columns Gemini chose for that group
 
 ### Normalized Post Schema
 

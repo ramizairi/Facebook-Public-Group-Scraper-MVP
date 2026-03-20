@@ -1,32 +1,38 @@
 import { pathToFileURL } from "node:url";
 
+import { buildWorkbookColumns } from "./columns.js";
 import { loadAnalysisConfig } from "./load-config.js";
 import { loadAnalysisPosts } from "./load-posts.js";
 import { analyzePostsWithGemini } from "./gemini-client.js";
 import { deriveCalendarWeek, deriveWeekday } from "./time-derived.js";
 import { writeAnalysisWorkbook } from "./write-xlsx.js";
 
-export function buildRow(post, analysis) {
-  return {
+export function buildRow(post, analysis, plan = { columns: [] }) {
+  const dynamicValues = analysis?.values ?? analysis ?? {};
+  const row = {
     post_url: post.url ?? null,
     created_at: post.createdAt ?? null,
-    "calendar WK": deriveCalendarWeek(post.createdAt),
-    WeekDay: deriveWeekday(post.createdAt),
+    calendar_week: deriveCalendarWeek(post.createdAt),
+    weekday: deriveWeekday(post.createdAt),
     profile_name: post.authorName ?? null,
     post: post.text ?? post.rawFragment?.textPreview ?? null,
-    gender: analysis?.gender ?? "unknown",
-    stauts: analysis?.status ?? "unknown",
-    from_city: analysis?.from_city ?? null,
-    from_area: analysis?.from_area ?? null,
-    to_area: analysis?.to_area ?? null,
-    prefered_departure_time: analysis?.preferred_departure_time ?? null,
-    price: analysis?.price ?? null,
-    nb_passengers: analysis?.nb_passengers ?? null,
+    gemini_summary: analysis?.summary ?? null,
+    gemini_confidence: analysis?.confidence ?? null,
   };
+
+  for (const column of plan.columns ?? []) {
+    row[column.key] = dynamicValues[column.key] ?? null;
+  }
+
+  return row;
 }
 
 const logger = {
   info(payload) {
+    if (payload?.event === "gemini-analysis-plan") {
+      console.log(`gemini-plan | sample=${payload.sampleSize} | model=${payload.model}`);
+    }
+
     if (payload?.event === "gemini-analysis-batch") {
       console.log(
         `gemini-analysis | batch=${payload.batch}/${payload.totalBatches} | size=${payload.batchSize} | model=${payload.model}`,
@@ -45,13 +51,21 @@ export async function runAnalysisWorkflow(
     requireInputFile: !Array.isArray(options.posts),
   });
   const posts = Array.isArray(options.posts) ? options.posts : await loadAnalysisPosts(config);
-  const analyses = await analyzePostsWithGemini(posts, config, logger);
-  const rows = posts.map((post, index) => buildRow(post, analyses[index]));
-  const outputPath = await writeAnalysisWorkbook(rows, config);
+  const { plan, analyses } = await analyzePostsWithGemini(posts, config, logger);
+  const rows = posts.map((post, index) => buildRow(post, analyses[index], plan));
+  const outputPath = await writeAnalysisWorkbook(
+    {
+      rows,
+      plan,
+      columns: buildWorkbookColumns(plan),
+    },
+    config,
+  );
 
   return {
     config,
     rows,
+    plan,
     outputPath,
   };
 }

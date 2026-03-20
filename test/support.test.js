@@ -13,6 +13,7 @@ import {
   shouldClickDomLoadMoreControl,
   shouldClickDomTextExpanderControl,
 } from "../src/extract/dom-fallback.js";
+import { toOutputRow } from "../src/output/output-row.js";
 import { sameGroupUrl } from "../src/utils/facebook-url.js";
 import { redactProxyConfig, summarizeProxyForConsole } from "../src/utils/redact.js";
 
@@ -228,6 +229,33 @@ test("extractDomPosts falls back to preview text when dir-auto blocks are thin",
 
   assert.equal(posts.length, 1);
   assert.match(posts[0].text, /3 places disponibles demain matin de Tunis vers sousse 8h/i);
+});
+
+test("toOutputRow keeps only the requested public export fields", () => {
+  assert.deepEqual(
+    toOutputRow({
+      url: "https://www.facebook.com/groups/1/posts/2/",
+      groupUrl: "https://www.facebook.com/groups/1/",
+      authorName: "Test User",
+      createdAt: "2026-03-20T12:00:00.000Z",
+      text: "Hello world",
+      reactionCount: 5,
+      commentCount: 2,
+      shareCount: 1,
+      sourceType: "network",
+      rawFragment: { ignored: true },
+    }),
+    {
+      url: "https://www.facebook.com/groups/1/posts/2/",
+      group_url: "https://www.facebook.com/groups/1/",
+      author_name: "Test User",
+      created_at: "2026-03-20T12:00:00.000Z",
+      text: "Hello world",
+      reaction_count: 5,
+      comment_count: 2,
+      share_count: 1,
+    },
+  );
 });
 
 test("dom load-more safety avoids clicking post-like controls inside articles", () => {

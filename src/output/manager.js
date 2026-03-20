@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import { persistCheckpoint } from "../core/checkpoint.js";
+import { toOutputRows } from "./output-row.js";
 import { safeJsonStringify } from "../utils/safe-json.js";
 
 function buildTimestampLabel() {
@@ -24,6 +25,17 @@ async function cleanupLegacyDebugArtifacts(debugDir) {
   }
 }
 
+async function cleanupLegacyOutputArtifacts(outputDir) {
+  const legacyFiles = [
+    "posts.unfiltered.json",
+    "posts.unfiltered.jsonl",
+  ];
+
+  await Promise.all(
+    legacyFiles.map((fileName) => fs.rm(path.join(outputDir, fileName), { force: true })),
+  );
+}
+
 export class OutputManager {
   constructor(paths, payloadSampleLimit = 12) {
     this.paths = paths;
@@ -36,10 +48,9 @@ export class OutputManager {
       root: outputDir,
       logsDir: path.join(outputDir, "logs"),
       debugDir: path.join(outputDir, "debug"),
+      outputJson: path.join(outputDir, "output.json"),
       postsJson: path.join(outputDir, "posts.json"),
       postsJsonl: path.join(outputDir, "posts.jsonl"),
-      postsUnfilteredJson: path.join(outputDir, "posts.unfiltered.json"),
-      postsUnfilteredJsonl: path.join(outputDir, "posts.unfiltered.jsonl"),
       statsJson: path.join(outputDir, "stats.json"),
       logFile: path.join(outputDir, "logs", "run.log"),
     };
@@ -47,36 +58,29 @@ export class OutputManager {
     await fs.mkdir(paths.root, { recursive: true });
     await fs.mkdir(paths.logsDir, { recursive: true });
     await fs.mkdir(paths.debugDir, { recursive: true });
+    await cleanupLegacyOutputArtifacts(paths.root);
     await cleanupLegacyDebugArtifacts(paths.debugDir);
 
     return new OutputManager(paths, payloadSampleLimit);
   }
 
   async resetPosts(posts, unfilteredPosts = posts) {
-    await fs.writeFile(this.paths.postsJson, safeJsonStringify(posts), "utf8");
-    const filteredJsonl = posts.map((post) => JSON.stringify(post)).join("\n");
-    await fs.writeFile(this.paths.postsJsonl, filteredJsonl ? `${filteredJsonl}\n` : "", "utf8");
-
-    await fs.writeFile(this.paths.postsUnfilteredJson, safeJsonStringify(unfilteredPosts), "utf8");
+    await fs.writeFile(this.paths.outputJson, safeJsonStringify(toOutputRows(posts)), "utf8");
+    await fs.writeFile(this.paths.postsJson, safeJsonStringify(unfilteredPosts), "utf8");
     const unfilteredJsonl = unfilteredPosts.map((post) => JSON.stringify(post)).join("\n");
-    await fs.writeFile(this.paths.postsUnfilteredJsonl, unfilteredJsonl ? `${unfilteredJsonl}\n` : "", "utf8");
+    await fs.writeFile(this.paths.postsJsonl, unfilteredJsonl ? `${unfilteredJsonl}\n` : "", "utf8");
   }
 
   async appendPosts(posts, unfilteredPosts = posts) {
-    if (posts.length) {
-      const filteredLines = posts.map((post) => JSON.stringify(post)).join("\n");
-      await fs.appendFile(this.paths.postsJsonl, `${filteredLines}\n`, "utf8");
-    }
-
     if (unfilteredPosts.length) {
       const unfilteredLines = unfilteredPosts.map((post) => JSON.stringify(post)).join("\n");
-      await fs.appendFile(this.paths.postsUnfilteredJsonl, `${unfilteredLines}\n`, "utf8");
+      await fs.appendFile(this.paths.postsJsonl, `${unfilteredLines}\n`, "utf8");
     }
   }
 
   async writePostsJson(posts, unfilteredPosts = posts) {
-    await fs.writeFile(this.paths.postsJson, safeJsonStringify(posts), "utf8");
-    await fs.writeFile(this.paths.postsUnfilteredJson, safeJsonStringify(unfilteredPosts), "utf8");
+    await fs.writeFile(this.paths.outputJson, safeJsonStringify(toOutputRows(posts)), "utf8");
+    await fs.writeFile(this.paths.postsJson, safeJsonStringify(unfilteredPosts), "utf8");
   }
 
   async writeStats(stats) {
