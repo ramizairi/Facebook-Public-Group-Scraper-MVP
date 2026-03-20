@@ -2,6 +2,7 @@ node_modules/
 /output/
 /artifacts/
 /.env
+/cookies.json
 /.env.local
 /.env.development
 /proxy/
