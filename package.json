@@ -1,7 +1,7 @@
 {
   "name": "facebook-public-group-scraper",
   "version": "0.1.0",
-  "description": "Browser-backed Facebook public group scraper MVP using Playwright and network-first extraction.",
+  "description": "Production-oriented Facebook public group scraper with Playwright, proxy support, checkpointing, and Gemini XLSX export.",
   "license": "MIT",
   "author": "RidyX",
   "type": "module",

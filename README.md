@@ -1,58 +1,91 @@
-# Facebook Public Group Scraper MVP
+# Facebook Public Group Scraper
 
-Browser-backed Facebook public group scraper built with Node.js and Playwright. It targets public groups only, prefers structured data from the page/network surface, and uses DOM extraction only as a fallback.
+Production-oriented Facebook public group scraper built with Node.js and Playwright. It is designed for local use first, with optional Docker and Apify support on top of the same codebase.
 
-The project now includes an Apify Actor wrapper on top of the existing scraper, so the same codebase can run locally or on Apify with Actor input, Apify Proxy, dataset output, key-value storage, and Apify-native scheduling.
+The scraper focuses on public groups only. It prefers structured data from the document and network surface, falls back to DOM extraction when needed, persists checkpoints, supports proxies and cookie-backed sessions, and can export a Gemini-generated XLSX workbook for each group.
 
-## What It Does
+## Highlights
 
-- Reads `GROUP_URL` from `.env` by default and allows CLI overrides.
-- Can preload cookies from a local `cookies.json` file through `.env` or `--cookies-file`.
-- Uses a group-specific output folder at `output/<groupId>/` unless `--output-dir` is passed explicitly.
-- Launches a Playwright Chromium browser with optional proxy support.
-- Supports single-proxy mode or proxy-pool rotation from files such as `proxy/socket5/*.txt`.
-- Warms up a logged-out Facebook session on `facebook.com` before opening the group URL to reduce cold-start login redirects.
-- Captures relevant network/document payloads and extracts posts from embedded JSON or response bodies first.
-- Falls back to `[role="feed"] [role="article"]` DOM parsing when structured extraction yields nothing new.
-- Deduplicates posts by stable IDs and canonical URLs.
-- Continuously writes a clean export as `output.json`, plus the full normal post archive as `posts.json` and `posts.jsonl`, along with `stats.json`, `checkpoint.json`, logs, and debug artifacts.
-- Supports resume mode with `--resume`.
-- Supports proxy verification mode with `--test-proxy`.
-- Includes a separate Gemini-to-XLSX analyzer that reads the saved clean export from `output.json`, infers the group type and useful spreadsheet columns, and writes a dynamic multi-sheet workbook to `output/xlsx/output.xlsx` without touching scraper runtime performance.
+- Public Facebook groups only
+- Network-first extraction with DOM fallback
+- Cookie-aware browser sessions from `cookies.json`
+- Proxy support for single proxies and proxy pools
+- Checkpointing, resume, and structured logs
+- Group-specific output folders under `output/<groupId>/`
+- Gemini-powered XLSX export written back into the same group folder
+- Optional Apify Actor wrapper for cloud runs
 
-## Limitations
+## What The Project Produces
 
-- Public Facebook groups only.
-- No login automation.
-- No private-group access.
-- No CAPTCHA or 2FA handling.
-- No official Graph API usage.
-- Logged-out Facebook is fragile and can change without notice.
-- Infinite-scroll feed responses are not guaranteed in logged-out mode, so the scraper treats embedded document state as a first-class structured source.
-- Some fields are best-effort only: `authorId`, `createdAt`, and engagement counts may be `null`.
+For each scraped group, the project writes a dedicated folder:
 
-## Setup
+```text
+output/<groupId>/
+  output.json
+  posts.json
+  posts.jsonl
+  checkpoint.json
+  stats.json
+  output.xlsx
+  logs/
+    run.log
+  debug/
+```
 
-1. Install dependencies:
+Files:
+
+- `output.json`: lightweight export for downstream use
+- `posts.json`: full normalized archive
+- `posts.jsonl`: append-friendly line-delimited archive
+- `checkpoint.json`: resume state
+- `stats.json`: run metrics
+- `output.xlsx`: Gemini-generated workbook, when analyzer is run
+- `logs/run.log`: structured run log
+- `debug/`: captured payload samples and failure metadata
+
+## Scope
+
+Supported:
+
+- Public Facebook groups
+- Local runs
+- Docker runs
+- Apify Actor deployment
+- Cookie-backed sessions for groups you can already access in a normal browser session
+
+Not supported:
+
+- Private groups
+- Login automation
+- CAPTCHA or 2FA solving
+- Official Graph API integrations
+
+## How It Works
+
+1. Opens the public group page in Playwright.
+2. Warms up the Facebook session first to reduce cold-start login redirects.
+3. Reads embedded document state and relevant network payloads.
+4. Extracts posts from structured sources first.
+5. Falls back to DOM extraction only when structured extraction stops yielding new posts.
+6. Deduplicates and persists normalized posts continuously.
+7. Optionally runs the Gemini analyzer on the group output and writes `output.xlsx` into the same group folder.
+
+## Quick Start
+
+Install dependencies:
 
 ```bash
 npm install
 npx playwright install chromium
 ```
 
-2. Create `.env` from the example:
+Create your env file:
 
 ```bash
 cp .env.example .env
 ```
 
-3. Set at minimum:
-
-```env
-GROUP_URL=https://www.facebook.com/groups/123456789012345/
-```
-
-Minimal local `.env` example:
+Minimal `.env`:
 
 ```env
 GROUP_URL=https://www.facebook.com/groups/123456789012345/
@@ -60,91 +93,67 @@ MAX_POSTS=100
 RUNTIME_MINUTES=
 COOKIES_FILE=
 HEADLESS=true
+
 PROXY_SERVER=
 PROXY_USERNAME=
 PROXY_PASSWORD=
 PROXY_POOL_DIR=
 PROXY_POOL_PROTOCOL=
+
 GEMINI_API_KEY=
 ```
 
-Everything else has built-in defaults. Only add advanced variables when you need to tune retries, scheduling, session state, or proxy rotation behavior.
-
-## Usage
-
-Universal entrypoint:
+Run the scraper:
 
 ```bash
 npm start
 ```
 
-Run with `.env` defaults:
+Run the analyzer:
+
+```bash
+npm run analyze:xlsx
+```
+
+If `GROUP_URL=https://www.facebook.com/groups/525468629029673/`, outputs will be written to:
+
+```text
+output/525468629029673/
+```
+
+## Common Commands
+
+Scrape using `.env` defaults:
 
 ```bash
 node src/index.js --max-posts 100
 ```
 
-By default, each run writes into `output/<groupId>/`.
-
-Override the group URL for a one-off run:
+Scrape a one-off group:
 
 ```bash
 node src/index.js --url "https://www.facebook.com/groups/..." --max-posts 100
 ```
 
-Use a cookies file exported as JSON:
+Scrape with a cookies file:
 
 ```bash
 node src/index.js --cookies-file ./cookies.json --max-posts 100
 ```
 
-Supported cookie file formats:
-
-- JSON array of cookies
-- Playwright/browser storage object with a top-level `cookies` array
-
-When `COOKIES_FILE` or `--cookies-file` is set, the scraper keeps that browser session sticky and avoids the normal automatic browser/session recycle strategy used for anonymous runs.
-
-Use a proxy:
-
-```bash
-node src/index.js \
-  --proxy-server=http://host:port \
-  --proxy-username=user \
-  --proxy-password=pass
-```
-
-Use a proxy pool from files under `proxy/socket5/`:
-
-```bash
-node src/index.js --max-posts 100
-```
-
-Disable proxy usage even if `.env` contains proxy settings:
+Force direct mode even if proxy settings exist:
 
 ```bash
 node src/index.js --no-proxy --max-posts 100
 ```
 
-Accepted proxy line formats:
-
-- `host:port`
-- `host:port:username:password`
-- `socks5://username:password@host:port`
-
-Resume a previous run:
+Run proxy verification:
 
 ```bash
-node src/index.js --resume
+node src/index.js --test-proxy
 ```
 
-Set a runtime limit:
-
-```bash
-node src/index.js --runtime-minutes 60
-```
-
-Run the scraper every 15 minutes for 2 hours, then export the XLSX analysis once at the end:
+Run on a schedule, then analyze:
 
 ```bash
 node src/index.js \
@@ -153,113 +162,115 @@ node src/index.js \
   --schedule-run-analyzer=true
 ```
 
-Verify outbound IP through the configured proxy:
+Analyze a specific group folder:
 
 ```bash
-node src/index.js --test-proxy
+node src/analyze/index.js --group-url "https://www.facebook.com/groups/525468629029673/"
 ```
 
-Generate an XLSX analysis from the latest scrape result:
+## Cookies
+
+You can preload browser cookies from a local JSON file with:
+
+- `COOKIES_FILE=./cookies.json`
+- or `--cookies-file ./cookies.json`
+
+Supported formats:
+
+- JSON array of cookies
+- Storage-state object with top-level `cookies`
+
+When a cookies file is present, the scraper keeps the session sticky and avoids the normal anonymous-session recycle strategy.
+
+## Proxy Support
+
+Supported modes:
+
+- Single proxy:
+  - `PROXY_SERVER`
+  - `PROXY_USERNAME`
+  - `PROXY_PASSWORD`
+- Proxy pool:
+  - `PROXY_POOL_DIR`
+  - `PROXY_POOL_PROTOCOL`
+
+Accepted proxy formats include:
+
+- `host:port`
+- `host:port:username:password`
+- `socks5://username:password@host:port`
+
+Useful scripts:
+
+- `npm run start:proxy`
+- `npm run start:no-proxy`
+- `npm run test:proxy`
+
+## Gemini XLSX Export
+
+The analyzer reads `output.json` from the group folder, infers the group type, chooses the most useful dynamic spreadsheet columns for that group, and writes a workbook back into the same folder.
+
+The workbook contains:
+
+- Main analysis sheet
+- `group_info` sheet
+- `column_map` sheet
+
+This makes the XLSX useful across different kinds of groups, not only ride-sharing groups.
+
+## Docker
+
+Build:
 
 ```bash
-npm run analyze:xlsx
+docker build -t facebook-public-group-scraper .
 ```
 
-The analyzer can:
+Run with Docker Compose:
 
-- infers the group type from the saved posts
-- asks Gemini to choose useful dynamic columns for that specific group
-- writes a main sheet with fixed post columns plus group-specific extracted columns
-- adds `group_info` and `column_map` sheets so the workbook explains its own schema
+```bash
+DOCKER_UID=$(id -u) DOCKER_GID=$(id -g) docker compose build
+DOCKER_UID=$(id -u) DOCKER_GID=$(id -g) docker compose run --rm scraper
+```
 
-## Apify Actor
+Run without proxy:
 
-This repository now contains the files required for Apify Actor deployment:
+```bash
+DOCKER_UID=$(id -u) DOCKER_GID=$(id -g) docker compose run --rm scraper --no-proxy
+```
 
-- [.actor/actor.json](/home/rami/Desktop/facebook-groupes-scrapper/.actor/actor.json)
-- [.actor/input_schema.json](/home/rami/Desktop/facebook-groupes-scrapper/.actor/input_schema.json)
-- [.actor/dataset_schema.json](/home/rami/Desktop/facebook-groupes-scrapper/.actor/dataset_schema.json)
-- [main.js](/home/rami/Desktop/facebook-groupes-scrapper/main.js)
+Run the analyzer only:
 
-### What Changes On Apify
+```bash
+DOCKER_UID=$(id -u) DOCKER_GID=$(id -g) docker compose run --rm scraper npm run analyze:xlsx
+```
 
-- Actor input is loaded from the Apify input schema instead of `.env`.
-- Apify Proxy is used through Actor input `proxyConfiguration`, so local proxy files are not required on the platform.
-- Filtered normalized posts are pushed to the default dataset.
-- Snapshots and artifacts are stored in the default key-value store:
-  - `output.json`
-  - `posts.json`
-  - `stats.json`
-  - `checkpoint.json`
-  - `OUTPUT`
-  - `debug-*`
-  - `analysis.rows.json` and `output.xlsx` when the analyzer runs
+## Apify
 
-### Apify Deployment
+This repository includes an Apify Actor wrapper:
 
-Fastest local deployment path with the Apify CLI:
+- `.actor/actor.json`
+- `.actor/input_schema.json`
+- `.actor/dataset_schema.json`
+- `main.js`
+
+On Apify:
+
+- Actor input replaces local `.env`
+- Apify Proxy can be used instead of local proxy files
+- dataset and key-value store outputs are supported
+- the same codebase can run locally or inside Actor runtime
+
+Deploy with the Apify CLI:
 
 ```bash
 apify login
 apify push
 ```
 
-If you prefer automatic rebuilds, create a new empty Actor in Apify Console and link this GitHub repository as the Actor source.
+## Configuration
 
-### Recommended Apify Usage
-
-- Use Apify platform schedules for recurring cloud runs.
-- Leave internal `scheduleTotalMinutes` empty unless you specifically want one long Actor run with multiple scrape cycles.
-- Set `GEMINI_API_KEY` in the Actor environment variables if you enable the XLSX analyzer.
-- Configure proxies from the Actor input `proxyConfiguration` field. If you use Apify Proxy, you can optionally set `proxyCountryCode` too.
-
-### Local Actor Smoke Test
-
-If you want to test the Actor wrapper locally before pushing:
-
-```bash
-apify run
-```
-
-The Actor runtime uses a separate local work directory for checkpoints and session state, so it does not reuse your normal local `output/result` folder.
-
-## Docker
-
-Build the image:
-
-```bash
-docker build -t facebook-public-group-scraper .
-```
-
-Run with your local `.env` and write outputs back to `./output` on the host:
-
-```bash
-docker run --rm \
-  --user "$(id -u):$(id -g)" \
-  --env-file .env \
-  -v "$(pwd)/output:/app/output" \
-  facebook-public-group-scraper \
-  --max-posts 100
-```
-
-Use Docker Compose:
-
-```bash
-DOCKER_UID=$(id -u) DOCKER_GID=$(id -g) docker compose run --rm scraper --max-posts 100
-```
-
-Notes:
-
-- The container does not copy your local `.env` into the image.
-- The default group-specific result folder is `/app/output/<groupId>` in the container and maps back to `./output/<groupId>` on the host.
-- When you bind-mount `./output`, run the container with your host UID/GID so the scraper can write logs and JSON files without root-owned permission issues.
-- If you still need `sudo` for Docker access, export the variables first and then use `sudo -E docker compose ...`.
-- Docker support is additive only; the local Node.js workflow remains unchanged.
-- On Apify, the same Docker image starts through [main.js](/home/rami/Desktop/facebook-groupes-scrapper/main.js), which switches automatically between the local CLI workflow and the Actor workflow based on the runtime environment.
-
-## Config
-
-Core `.env` variables for normal local usage:
+Core env vars for most runs:
 
 - `GROUP_URL`
 - `MAX_POSTS`
@@ -273,118 +284,30 @@ Core `.env` variables for normal local usage:
 - `PROXY_POOL_PROTOCOL`
 - `GEMINI_API_KEY`
 
-Advanced optional `.env` overrides:
+Advanced tuning is available for:
 
-- `SCHEDULE_TOTAL_MINUTES`
-- `SCHEDULE_INTERVAL_MINUTES`
-- `SCHEDULE_RUN_ANALYZER`
-- `SESSION_STATE_ENABLED`
-- `SESSION_STATE_DIR`
-- `SESSION_STATE_TTL_HOURS`
-- `SESSION_STATE_MIN_POSTS_TO_SAVE`
-- `SESSION_STATE_RESET_ON_BLOCK`
-- `PROXY_MAX_SESSIONS_PER_PROXY`
-- `PROXY_QUARANTINE_MINUTES`
-- `PROXY_FAILURE_SCORE_THRESHOLD`
-- `PROXY_LOW_YIELD_POST_THRESHOLD`
-- `PROXY_ROTATE_ON_RETRY`
-- `PROXY_ROTATE_ON_RECYCLE`
-- `PROXY_ROTATE_ON_BLOCK`
-- `STARTUP_RETRIES`
-- `STARTUP_SETTLE_MS`
-- `HOME_WARMUP`
-- `HOME_WARMUP_DELAY_MS`
-- `MIN_DELAY_MS`
-- `MAX_DELAY_MS`
-- `NO_NEW_POST_CYCLES`
-- `NETWORK_STALL_RECYCLE_CYCLES`
-- `MAX_NETWORK_STALL_RESTARTS`
-- `BROWSER_RECYCLE_REQUESTS`
-- `BROWSER_LOCALE`
-- `BROWSER_TIMEZONE`
-- `USER_AGENT`
-- `PROXY_TEST_URL`
-- `GEMINI_MODEL`
-- `GEMINI_BATCH_SIZE`
-- `GEMINI_TEMPERATURE`
-- `GEMINI_MAX_OUTPUT_TOKENS`
-- `ANALYZER_INPUT_DIR`
-- `ANALYZER_INPUT_FILE`
-- `ANALYZER_USE_UNFILTERED_POSTS`
-- `MAX_POSTS_TO_ANALYZE`
-- `ANALYZER_OUTPUT_DIR`
-- `ANALYZER_OUTPUT_FILE`
-
-Supported CLI flags:
-
-- `--url`
-- `--max-posts`
-- `--runtime-minutes`
-- `--cookies-file`
-- `--schedule-total-minutes`
-- `--schedule-interval-minutes`
-- `--schedule-run-analyzer=true|false`
-- `--session-state-enabled=true|false`
-- `--session-state-dir`
-- `--session-state-ttl-hours`
-- `--session-state-min-posts-to-save`
-- `--session-state-reset-on-block=true|false`
-- `--output-dir`
-- `--no-proxy`
-- `--proxy-server`
-- `--proxy-username`
-- `--proxy-password`
-- `--proxy-pool-dir`
-- `--proxy-pool-protocol`
-- `--proxy-max-sessions-per-proxy`
-- `--proxy-quarantine-minutes`
-- `--proxy-failure-score-threshold`
-- `--proxy-low-yield-post-threshold`
-- `--proxy-rotate-on-retry=true|false`
-- `--proxy-rotate-on-recycle=true|false`
-- `--proxy-rotate-on-block=true|false`
-- `--resume`
-- `--test-proxy`
-- `--browser-recycle-requests`
-- `--home-warmup=true|false`
-- `--home-warmup-delay-ms`
-- `--min-delay-ms`
-- `--max-delay-ms`
-- `--network-stall-recycle-cycles`
-- `--max-network-stall-restarts`
-- `--headless=true|false`
+- scheduling
+- session-state reuse
+- proxy rotation and quarantine
+- warmup and retry timing
+- browser recycle thresholds
+- Gemini batch size, model, and output settings
 
 CLI flags override `.env`.
 
-Useful npm scripts:
+## npm Scripts
 
-- `npm run start:proxy`: run with whatever proxy settings are currently in `.env`
-- `npm run start:no-proxy`: force a direct run without proxy or proxy pool
-- `npm run start:scheduled`: run the main entrypoint with schedule settings from `.env`
-- `npm run test:proxy`: verify outbound IP through the current proxy configuration
-- `npm run analyze:xlsx`: analyze the current group folder with Gemini and export `output/<groupId>/output.xlsx`
+- `npm start`: universal entrypoint
+- `npm run start:proxy`: run with proxy settings from `.env`
+- `npm run start:no-proxy`: force direct mode
+- `npm run start:scheduled`: run scheduled mode from `.env`
+- `npm run test:proxy`: verify outbound proxy path
+- `npm run analyze:xlsx`: generate the group workbook
+- `npm test`: run the test suite
 
-## Output
+## Normalized Post Shape
 
-Each run writes into the configured output directory:
-
-- default path: `output/<groupId>`
-- `output.json`: clean export with `url`, `group_url`, `author_name`, `created_at`, `text`, `reaction_count`, `comment_count`, and `share_count`
-- `posts.json`: full normal post array used as the main archive
-- `posts.jsonl`: append-friendly line-delimited main archive
-- `stats.json`: run metrics and throughput
-- `checkpoint.json`: resumable state with collected posts
-- `logs/run.log`: structured JSON logs
-- `debug/`: sampled payloads, failure screenshots, HTML snapshots, and recent network traces
-
-Analyzer output:
-
-- `output/<groupId>/output.xlsx`: workbook with:
-  - a main analysis sheet named from the inferred group type
-  - a `group_info` sheet with Gemini's group summary
-  - a `column_map` sheet listing the dynamic columns Gemini chose for that group
-
-### Normalized Post Schema
+Example `posts.json` item:
 
 ```json
 {
@@ -412,25 +335,24 @@ Analyzer output:
 }
 ```
 
-## Architecture
+## Project Structure
 
-- `src/config/`: `.env` loading, CLI parsing, config validation
-- `src/browser/`: Playwright session launch and proxy test mode
-- `src/extract/`: network tap, response classifier, embedded JSON parser, DOM fallback
-- `src/core/`: crawl loop, block detection, normalization, dedup, checkpointing, metrics
-- `src/output/`: structured logging and artifact persistence
-- `src/utils/`: URL normalization, delay helpers, JSON safety, redaction helpers
+- `src/config/`: env loading, CLI parsing, validation
+- `src/browser/`: Playwright session boot, cookies, proxies, session state
+- `src/extract/`: network/document parsing and DOM fallback
+- `src/core/`: crawl loop, deduplication, metrics, checkpoints
+- `src/output/`: logs and persisted artifacts
+- `src/analyze/`: Gemini analysis and XLSX generation
+- `src/apify/`: Actor wrapper and Apify-specific output handling
+- `test/`: regression coverage for parser, config, analyzer, proxy, and support logic
 
-## Fragility Points
+## Known Fragility Points
 
-- Facebook often changes internal response shapes, embedded JSON formats, and logged-out feed behavior.
-- The login overlay may still appear even when posts remain accessible.
-- Feed expansion after initial load may stop yielding structured responses, which is why DOM fallback exists.
-- Relative timestamps shown in DOM are not reliable enough to convert to absolute timestamps.
+- Facebook frequently changes markup and internal payload shapes.
+- Logged-out visibility is inconsistent across groups, sessions, and IPs.
+- Proxy quality matters a lot; some proxies can tunnel traffic but still expose a weak Facebook surface.
+- DOM extraction is a fallback, not the primary source of truth.
 
-## Future Extensions
+## License
 
-- Add fixtures from more real-world group layouts and pinned/featured post variants.
-- Add richer engagement parsing from additional GraphQL or Relay shapes when available.
-- Add optional storage backends beyond local JSON/JSONL.
-- Add stronger cursor-like progress tracking if Facebook exposes stable pagination surfaces again.
+[MIT](LICENSE)
