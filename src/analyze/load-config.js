@@ -127,10 +127,7 @@ export function loadAnalysisConfig(
   const configuredInputFile = pickFirstNonEmpty(cli["input-file"], env.ANALYZER_INPUT_FILE);
   const inputPostsFile = configuredInputFile
     ? path.resolve(cwd, configuredInputFile)
-    : path.join(
-        path.resolve(cwd, rawInputDir ?? ""),
-        useUnfilteredPosts ? "posts.unfiltered.json" : "posts.json",
-      );
+    : path.join(path.resolve(cwd, rawInputDir ?? ""), "output.json");
 
   if (!rawGeminiApiKey) {
     throw new Error("Set GEMINI_API_KEY in .env before running npm run analyze:xlsx.");

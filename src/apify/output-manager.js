@@ -1,4 +1,5 @@
 import { Actor } from "apify";
+import { toOutputRows } from "../output/output-row.js";
 
 function buildTimestampLabel() {
   return new Date().toISOString().replace(/[:.]/g, "-");
@@ -16,10 +17,9 @@ export class ApifyOutputManager {
       root: "apify://default-storage",
       logsDir: null,
       debugDir: null,
+      outputJson: "output.json",
       postsJson: "posts.json",
       postsJsonl: "dataset://default",
-      postsUnfilteredJson: "posts.unfiltered.json",
-      postsUnfilteredJsonl: null,
       statsJson: "stats.json",
       logFile: null,
     };
@@ -30,19 +30,19 @@ export class ApifyOutputManager {
   }
 
   async resetPosts(posts, unfilteredPosts = posts) {
-    await Actor.setValue("posts.json", posts);
-    await Actor.setValue("posts.unfiltered.json", unfilteredPosts);
+    await Actor.setValue("output.json", toOutputRows(posts));
+    await Actor.setValue("posts.json", unfilteredPosts);
   }
 
-  async appendPosts(posts, _unfilteredPosts = posts) {
-    if (posts.length) {
-      await Actor.pushData(posts);
+  async appendPosts(_posts, unfilteredPosts = []) {
+    if (unfilteredPosts.length) {
+      await Actor.pushData(unfilteredPosts);
     }
   }
 
   async writePostsJson(posts, unfilteredPosts = posts) {
-    await Actor.setValue("posts.json", posts);
-    await Actor.setValue("posts.unfiltered.json", unfilteredPosts);
+    await Actor.setValue("output.json", toOutputRows(posts));
+    await Actor.setValue("posts.json", unfilteredPosts);
   }
 
   async writeStats(stats) {
