@@ -10,6 +10,7 @@ const ENV_KEYS = [
   "GROUP_URL",
   "MAX_POSTS",
   "RUNTIME_MINUTES",
+  "COOKIES_FILE",
   "SCHEDULE_TOTAL_MINUTES",
   "SCHEDULE_INTERVAL_MINUTES",
   "SCHEDULE_RUN_ANALYZER",
@@ -70,6 +71,7 @@ test("loadConfig uses .env defaults and lets CLI override them", async () => {
       [
         "GROUP_URL=https://www.facebook.com/groups/123456789012345/",
         "MAX_POSTS=55",
+        "COOKIES_FILE=./cookies.json",
         "PROXY_SERVER=http://proxy.example:8080",
         "PROXY_POOL_DIR=proxy/socket5",
       ].join("\n"),
@@ -83,11 +85,38 @@ test("loadConfig uses .env defaults and lets CLI override them", async () => {
 
     assert.equal(config.groupUrl, "https://www.facebook.com/groups/override-group/");
     assert.equal(config.maxPosts, 5);
+    assert.equal(config.cookiesFile, path.join(tempDir, "cookies.json"));
     assert.equal(config.proxy.server, "http://proxy.example:8080");
     assert.equal(config.proxyPoolDir, path.join(tempDir, "proxy", "socket5"));
     assert.equal(config.resume, true);
     assert.ok(config.outputDir.endsWith(path.join("output", "result")));
     assert.ok(config.sessionStateDir.endsWith(path.join("output", "result", "session-state")));
+  } finally {
+    restoreEnv(previousEnv);
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("loadConfig lets CLI override the cookies file path", async () => {
+  const previousEnv = snapshotEnv();
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "fb-config-test-"));
+
+  try {
+    for (const key of ENV_KEYS) {
+      delete process.env[key];
+    }
+
+    await fs.writeFile(
+      path.join(tempDir, ".env"),
+      [
+        "GROUP_URL=https://www.facebook.com/groups/123456789012345/",
+        "COOKIES_FILE=./cookies-a.json",
+      ].join("\n"),
+      "utf8",
+    );
+
+    const config = loadConfig(["--cookies-file", "./cookies-b.json"], tempDir);
+    assert.equal(config.cookiesFile, path.join(tempDir, "cookies-b.json"));
   } finally {
     restoreEnv(previousEnv);
     await fs.rm(tempDir, { recursive: true, force: true });
