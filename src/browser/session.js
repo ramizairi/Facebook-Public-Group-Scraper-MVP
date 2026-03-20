@@ -1,5 +1,6 @@
 import { chromium } from "playwright";
 import { prepareBrowserProxy } from "./proxy-bridge.js";
+import { loadCookiesFromFile } from "./cookies-file.js";
 import { redactProxyConfig, summarizeProxyForConsole } from "../utils/redact.js";
 
 export async function launchBrowserSession(
@@ -27,6 +28,10 @@ export async function launchBrowserSession(
   await context.setExtraHTTPHeaders({
     "Accept-Language": `${config.browserLocale},en;q=0.9`,
   });
+  const fileCookies = await loadCookiesFromFile(config.cookiesFile, logger);
+  if (fileCookies.length) {
+    await context.addCookies(fileCookies);
+  }
   await context.addInitScript(() => {
     Object.defineProperty(navigator, "webdriver", {
       get: () => undefined,
@@ -49,6 +54,7 @@ export async function launchBrowserSession(
     headless: config.headless,
     proxy: redactProxyConfig(proxyOverride),
     sessionStateLoaded: Boolean(sessionState?.statePath),
+    cookiesFileLoaded: Boolean(config.cookiesFile),
   });
 
   if (proxyOverride?.server) {

@@ -28,6 +28,13 @@ const DOM_LOAD_MORE_PATTERNS = [
   /view more/i,
 ];
 
+const DOM_TEXT_EXPANDER_PATTERNS = [
+  /^see more$/i,
+  /^show more$/i,
+  /^continue reading$/i,
+  /^read more$/i,
+];
+
 function looksLikeTopLevelPostHref(href, currentGroupSlugOrId) {
   if (!href) {
     return false;
@@ -136,11 +143,21 @@ export async function prepareDomExtraction(page) {
           return false;
         }
 
+        if (element.closest('a[href]')) {
+          return false;
+        }
+
+        if (element.closest('[role="dialog"]')) {
+          return false;
+        }
+
         if (/(like|comment|share|react|message|follow|join)/i.test(label)) {
           return false;
         }
 
-        return /(see more|show more|view more|more|continue reading)/i.test(label);
+        return [/^see more$/i, /^show more$/i, /^continue reading$/i, /^read more$/i].some((pattern) =>
+          pattern.test(label),
+        );
       });
 
       for (const expander of expanders.slice(0, 12)) {
@@ -268,7 +285,7 @@ export async function nudgeDomFeed(page, context) {
       const topLevelArticles = collectTopLevelArticles();
       topLevelArticles.at(-1)?.article?.scrollIntoView?.({ block: "end", inline: "nearest" });
 
-      const controls = Array.from(document.querySelectorAll('a[href], button, [role="button"]'));
+      const controls = Array.from(document.querySelectorAll('button, [role="button"]'));
       const loadMore = controls.filter((element) => {
         const label = `${element.getAttribute("aria-label") ?? ""} ${element.textContent ?? ""}`
           .replace(/\s+/g, " ")
@@ -283,6 +300,21 @@ export async function nudgeDomFeed(page, context) {
           return false;
         }
 
+        if (element.closest('a[href]')) {
+          return false;
+        }
+
+        const article = element.closest('[role="article"]');
+        if (article) {
+          const articleHasTopLevelPermalink = Array.from(article.querySelectorAll("a[href]"))
+            .map((anchor) => absoluteHref(anchor.getAttribute("href")))
+            .some((href) => looksLikeTopLevelPostHref(href, currentGroupSlugOrId));
+
+          if (articleHasTopLevelPermalink) {
+            return false;
+          }
+        }
+
         return loadMorePatterns.some((pattern) => new RegExp(pattern, "i").test(label));
       });
 
@@ -294,6 +326,52 @@ export async function nudgeDomFeed(page, context) {
       loadMorePatterns: DOM_LOAD_MORE_PATTERNS.map((pattern) => pattern.source),
     })
     .catch(() => {});
+}
+
+export function shouldClickDomLoadMoreControl(control) {
+  if (!control || !control.label) {
+    return false;
+  }
+
+  const label = `${control.label}`.replace(/\s+/g, " ").trim().toLowerCase();
+  if (!label) {
+    return false;
+  }
+
+  if (/(like|comment|share|react|message|join|follow|invite)/i.test(label)) {
+    return false;
+  }
+
+  if (control.insideAnchor) {
+    return false;
+  }
+
+  if (control.insideArticleWithTopLevelPermalink) {
+    return false;
+  }
+
+  return DOM_LOAD_MORE_PATTERNS.some((pattern) => pattern.test(label));
+}
+
+export function shouldClickDomTextExpanderControl(control) {
+  if (!control || !control.label) {
+    return false;
+  }
+
+  const label = `${control.label}`.replace(/\s+/g, " ").trim().toLowerCase();
+  if (!label) {
+    return false;
+  }
+
+  if (control.insideAnchor || control.insideDialog) {
+    return false;
+  }
+
+  if (/(like|comment|share|react|message|follow|join)/i.test(label)) {
+    return false;
+  }
+
+  return DOM_TEXT_EXPANDER_PATTERNS.some((pattern) => pattern.test(label));
 }
 
 export async function extractDomPosts(page, context) {

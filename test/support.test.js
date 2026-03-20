@@ -7,7 +7,12 @@ import test from "node:test";
 import { buildCheckpoint, loadCheckpoint, persistCheckpoint } from "../src/core/checkpoint.js";
 import { DedupStore } from "../src/core/dedup-store.js";
 import { normalizeCandidate } from "../src/core/normalize.js";
-import { extractDomPosts } from "../src/extract/dom-fallback.js";
+import { shouldRecycleBrowser, shouldRecycleOnNetworkStall } from "../src/core/run-scraper.js";
+import {
+  extractDomPosts,
+  shouldClickDomLoadMoreControl,
+  shouldClickDomTextExpanderControl,
+} from "../src/extract/dom-fallback.js";
 import { sameGroupUrl } from "../src/utils/facebook-url.js";
 import { redactProxyConfig, summarizeProxyForConsole } from "../src/utils/redact.js";
 
@@ -223,4 +228,127 @@ test("extractDomPosts falls back to preview text when dir-auto blocks are thin",
 
   assert.equal(posts.length, 1);
   assert.match(posts[0].text, /3 places disponibles demain matin de Tunis vers sousse 8h/i);
+});
+
+test("dom load-more safety avoids clicking post-like controls inside articles", () => {
+  assert.equal(
+    shouldClickDomLoadMoreControl({
+      label: "View more posts",
+      insideAnchor: false,
+      insideArticleWithTopLevelPermalink: false,
+    }),
+    true,
+  );
+
+  assert.equal(
+    shouldClickDomLoadMoreControl({
+      label: "View more",
+      insideAnchor: true,
+      insideArticleWithTopLevelPermalink: false,
+    }),
+    false,
+  );
+
+  assert.equal(
+    shouldClickDomLoadMoreControl({
+      label: "Show more",
+      insideAnchor: false,
+      insideArticleWithTopLevelPermalink: true,
+    }),
+    false,
+  );
+});
+
+test("dom text-expander safety avoids generic more controls that can navigate away", () => {
+  assert.equal(
+    shouldClickDomTextExpanderControl({
+      label: "See more",
+      insideAnchor: false,
+      insideDialog: false,
+    }),
+    true,
+  );
+
+  assert.equal(
+    shouldClickDomTextExpanderControl({
+      label: "More",
+      insideAnchor: false,
+      insideDialog: false,
+    }),
+    false,
+  );
+
+  assert.equal(
+    shouldClickDomTextExpanderControl({
+      label: "View more",
+      insideAnchor: false,
+      insideDialog: false,
+    }),
+    false,
+  );
+
+  assert.equal(
+    shouldClickDomTextExpanderControl({
+      label: "See more",
+      insideAnchor: true,
+      insideDialog: false,
+    }),
+    false,
+  );
+});
+
+test("cookie-backed sessions stay sticky and skip automatic browser recycling", () => {
+  const networkTap = {
+    getStats() {
+      return {
+        totalRequests: 999,
+      };
+    },
+  };
+
+  assert.equal(
+    shouldRecycleBrowser(
+      {
+        cookiesFile: "/tmp/cookies.json",
+        browserRecycleRequests: 250,
+      },
+      networkTap,
+    ),
+    false,
+  );
+
+  assert.equal(
+    shouldRecycleOnNetworkStall({
+      cookiesFile: "/tmp/cookies.json",
+    }),
+    false,
+  );
+});
+
+test("anonymous sessions still allow recycling when request thresholds are hit", () => {
+  const networkTap = {
+    getStats() {
+      return {
+        totalRequests: 300,
+      };
+    },
+  };
+
+  assert.equal(
+    shouldRecycleBrowser(
+      {
+        cookiesFile: null,
+        browserRecycleRequests: 250,
+      },
+      networkTap,
+    ),
+    true,
+  );
+
+  assert.equal(
+    shouldRecycleOnNetworkStall({
+      cookiesFile: null,
+    }),
+    true,
+  );
 });

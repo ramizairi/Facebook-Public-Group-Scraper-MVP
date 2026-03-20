@@ -9,7 +9,7 @@ import { SessionStateStore } from "../browser/session-state.js";
 import { closeBrowserSession, launchBrowserSession } from "../browser/session.js";
 import { warmupFacebookSession } from "../browser/warmup.js";
 import { sleepWithJitter } from "../utils/delay.js";
-import { sameGroupUrl } from "../utils/facebook-url.js";
+import { extractPostInfoFromUrl, sameGroupUrl } from "../utils/facebook-url.js";
 import { elapsedMs, minutesToMs } from "../utils/time.js";
 import { NetworkTap } from "../extract/network-tap.js";
 import {
@@ -59,12 +59,39 @@ async function settleStartupPage(page, config) {
   await dismissPotentialOverlays(page);
 }
 
-async function advanceFeed(page, config) {
+async function recoverFeedContextIfNavigated(page, config, logger) {
+  const currentUrl = page.url();
+  const postInfo = extractPostInfoFromUrl(currentUrl);
+  if (!postInfo) {
+    return false;
+  }
+
+  logger.info({
+    event: "feed-context-recover",
+    reason: "navigated-to-post",
+    currentUrl,
+    targetGroupUrl: config.groupUrl,
+  });
+
+  await page.goBack({ waitUntil: "domcontentloaded" }).catch(() => {});
+  await dismissPotentialOverlays(page);
+
+  if (extractPostInfoFromUrl(page.url())) {
+    await navigateToGroup(page, config.groupUrl);
+    await settleStartupPage(page, config);
+  }
+
+  return true;
+}
+
+async function advanceFeed(page, config, logger) {
   const beforeState = await readDomFeedState(page, { groupUrl: config.groupUrl });
 
   await dismissPotentialOverlays(page);
   await prepareDomExtraction(page);
+  await recoverFeedContextIfNavigated(page, config, logger);
   await nudgeDomFeed(page, { groupUrl: config.groupUrl });
+  await recoverFeedContextIfNavigated(page, config, logger);
   await page.waitForTimeout(250).catch(() => {});
   await page.mouse.wheel(0, 2_600).catch(() => {});
   await page.waitForTimeout(250).catch(() => {});
@@ -80,6 +107,7 @@ async function advanceFeed(page, config) {
   await page.keyboard.press("End").catch(() => {});
   await sleepWithJitter(config.minDelayMs, config.maxDelayMs);
   await dismissPotentialOverlays(page);
+  await recoverFeedContextIfNavigated(page, config, logger);
 
   const afterState = await readDomFeedState(page, { groupUrl: config.groupUrl });
   return {
@@ -190,8 +218,16 @@ function reachedRuntimeLimit(config, startedAtMs) {
   return elapsedMs(startedAtMs) >= runtimeLimitMs;
 }
 
-function shouldRecycleBrowser(config, networkTap) {
+export function shouldRecycleBrowser(config, networkTap) {
+  if (config.cookiesFile) {
+    return false;
+  }
+
   return networkTap.getStats().totalRequests >= config.browserRecycleRequests;
+}
+
+export function shouldRecycleOnNetworkStall(config) {
+  return !config.cookiesFile;
 }
 
 function shouldRotateProxy(config, reason) {
@@ -612,7 +648,7 @@ export async function runScraper(config, outputManager, logger) {
       }
 
       metrics.recordCycle();
-      const feedAdvance = await advanceFeed(session.page, config);
+      const feedAdvance = await advanceFeed(session.page, config, logger);
 
       const cycleCandidates = collectNetworkCandidates(networkTap, outputManager, config);
       const structuredCandidates = await cycleCandidates;
@@ -679,6 +715,7 @@ export async function runScraper(config, outputManager, logger) {
 
       if (
         !blockState.blocked &&
+        shouldRecycleOnNetworkStall(config) &&
         networkStallCycles >= config.networkStallRecycleCycles &&
         networkStallRestarts < config.maxNetworkStallRestarts
       ) {

@@ -7,6 +7,7 @@ The project now includes an Apify Actor wrapper on top of the existing scraper, 
 ## What It Does
 
 - Reads `GROUP_URL` from `.env` by default and allows CLI overrides.
+- Can preload cookies from a local `cookies.json` file through `.env` or `--cookies-file`.
 - Uses a cumulative output folder at `output/result` unless `--output-dir` is passed explicitly.
 - Launches a Playwright Chromium browser with optional proxy support.
 - Supports single-proxy mode or proxy-pool rotation from files such as `proxy/socket5/*.txt`.
@@ -51,6 +52,24 @@ cp .env.example .env
 GROUP_URL=https://www.facebook.com/groups/123456789012345/
 ```
 
+Minimal local `.env` example:
+
+```env
+GROUP_URL=https://www.facebook.com/groups/123456789012345/
+MAX_POSTS=100
+RUNTIME_MINUTES=
+COOKIES_FILE=
+HEADLESS=true
+PROXY_SERVER=
+PROXY_USERNAME=
+PROXY_PASSWORD=
+PROXY_POOL_DIR=
+PROXY_POOL_PROTOCOL=
+GEMINI_API_KEY=
+```
+
+Everything else has built-in defaults. Only add advanced variables when you need to tune retries, scheduling, session state, or proxy rotation behavior.
+
 ## Usage
 
 Universal entrypoint:
@@ -72,6 +91,19 @@ Override the group URL for a one-off run:
 ```bash
 node src/index.js --url "https://www.facebook.com/groups/..." --max-posts 100
 ```
+
+Use a cookies file exported as JSON:
+
+```bash
+node src/index.js --cookies-file ./cookies.json --max-posts 100
+```
+
+Supported cookie file formats:
+
+- JSON array of cookies
+- Playwright/browser storage object with a top-level `cookies` array
+
+When `COOKIES_FILE` or `--cookies-file` is set, the scraper keeps that browser session sticky and avoids the normal automatic browser/session recycle strategy used for anonymous runs.
 
 Use a proxy:
 
@@ -220,11 +252,22 @@ Notes:
 
 ## Config
 
-Supported `.env` variables:
+Core `.env` variables for normal local usage:
 
 - `GROUP_URL`
 - `MAX_POSTS`
 - `RUNTIME_MINUTES`
+- `COOKIES_FILE`
+- `HEADLESS`
+- `PROXY_SERVER`
+- `PROXY_USERNAME`
+- `PROXY_PASSWORD`
+- `PROXY_POOL_DIR`
+- `PROXY_POOL_PROTOCOL`
+- `GEMINI_API_KEY`
+
+Advanced optional `.env` overrides:
+
 - `SCHEDULE_TOTAL_MINUTES`
 - `SCHEDULE_INTERVAL_MINUTES`
 - `SCHEDULE_RUN_ANALYZER`
@@ -233,11 +276,6 @@ Supported `.env` variables:
 - `SESSION_STATE_TTL_HOURS`
 - `SESSION_STATE_MIN_POSTS_TO_SAVE`
 - `SESSION_STATE_RESET_ON_BLOCK`
-- `PROXY_SERVER`
-- `PROXY_USERNAME`
-- `PROXY_PASSWORD`
-- `PROXY_POOL_DIR`
-- `PROXY_POOL_PROTOCOL`
 - `PROXY_MAX_SESSIONS_PER_PROXY`
 - `PROXY_QUARANTINE_MINUTES`
 - `PROXY_FAILURE_SCORE_THRESHOLD`
@@ -258,9 +296,7 @@ Supported `.env` variables:
 - `BROWSER_LOCALE`
 - `BROWSER_TIMEZONE`
 - `USER_AGENT`
-- `HEADLESS`
 - `PROXY_TEST_URL`
-- `GEMINI_API_KEY`
 - `GEMINI_MODEL`
 - `GEMINI_BATCH_SIZE`
 - `GEMINI_TEMPERATURE`
@@ -277,6 +313,7 @@ Supported CLI flags:
 - `--url`
 - `--max-posts`
 - `--runtime-minutes`
+- `--cookies-file`
 - `--schedule-total-minutes`
 - `--schedule-interval-minutes`
 - `--schedule-run-analyzer=true|false`
