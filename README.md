@@ -8,7 +8,7 @@ The project now includes an Apify Actor wrapper on top of the existing scraper, 
 
 - Reads `GROUP_URL` from `.env` by default and allows CLI overrides.
 - Can preload cookies from a local `cookies.json` file through `.env` or `--cookies-file`.
-- Uses a cumulative output folder at `output/result` unless `--output-dir` is passed explicitly.
+- Uses a group-specific output folder at `output/<groupId>/` unless `--output-dir` is passed explicitly.
 - Launches a Playwright Chromium browser with optional proxy support.
 - Supports single-proxy mode or proxy-pool rotation from files such as `proxy/socket5/*.txt`.
 - Warms up a logged-out Facebook session on `facebook.com` before opening the group URL to reduce cold-start login redirects.
@@ -84,7 +84,7 @@ Run with `.env` defaults:
 node src/index.js --max-posts 100
 ```
 
-By default, each run writes into the cumulative folder `output/result`.
+By default, each run writes into `output/<groupId>/`.
 
 Override the group URL for a one-off run:
 
@@ -251,7 +251,7 @@ DOCKER_UID=$(id -u) DOCKER_GID=$(id -g) docker compose run --rm scraper --max-po
 Notes:
 
 - The container does not copy your local `.env` into the image.
-- The default cumulative result folder is `/app/output/result` in the container and maps back to `./output/result` on the host.
+- The default group-specific result folder is `/app/output/<groupId>` in the container and maps back to `./output/<groupId>` on the host.
 - When you bind-mount `./output`, run the container with your host UID/GID so the scraper can write logs and JSON files without root-owned permission issues.
 - If you still need `sudo` for Docker access, export the variables first and then use `sudo -E docker compose ...`.
 - Docker support is additive only; the local Node.js workflow remains unchanged.
@@ -362,13 +362,13 @@ Useful npm scripts:
 - `npm run start:no-proxy`: force a direct run without proxy or proxy pool
 - `npm run start:scheduled`: run the main entrypoint with schedule settings from `.env`
 - `npm run test:proxy`: verify outbound IP through the current proxy configuration
-- `npm run analyze:xlsx`: analyze the cumulative saved result folder with Gemini and export `output/xlsx/output.xlsx`
+- `npm run analyze:xlsx`: analyze the current group folder with Gemini and export `output/<groupId>/output.xlsx`
 
 ## Output
 
 Each run writes into the configured output directory:
 
-- default path: `output/result`
+- default path: `output/<groupId>`
 - `output.json`: clean export with `url`, `group_url`, `author_name`, `created_at`, `text`, `reaction_count`, `comment_count`, and `share_count`
 - `posts.json`: full normal post array used as the main archive
 - `posts.jsonl`: append-friendly line-delimited main archive
@@ -379,7 +379,7 @@ Each run writes into the configured output directory:
 
 Analyzer output:
 
-- `output/xlsx/output.xlsx`: workbook with:
+- `output/<groupId>/output.xlsx`: workbook with:
   - a main analysis sheet named from the inferred group type
   - a `group_info` sheet with Gemini's group summary
   - a `column_map` sheet listing the dynamic columns Gemini chose for that group

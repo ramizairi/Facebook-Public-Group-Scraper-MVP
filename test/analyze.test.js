@@ -44,7 +44,7 @@ test("deriveCalendarWeek and deriveWeekday use Africa/Tunis calendar values", ()
   assert.equal(deriveWeekday("2026-03-18T18:31:13.000Z"), "Wednesday");
 });
 
-test("loadAnalysisConfig defaults to the cumulative result output.json", async () => {
+test("loadAnalysisConfig defaults to the current group output folder and writes xlsx there too", async () => {
   const previousEnv = snapshotEnv();
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "fb-analyze-test-"));
 
@@ -55,18 +55,21 @@ test("loadAnalysisConfig defaults to the cumulative result output.json", async (
 
     await fs.writeFile(
       path.join(tempDir, ".env"),
-      ["GEMINI_API_KEY=test-key", "ANALYZER_OUTPUT_DIR=output/xlsx"].join("\n"),
+      [
+        "GEMINI_API_KEY=test-key",
+        "GROUP_URL=https://www.facebook.com/groups/123456789012345/",
+      ].join("\n"),
       "utf8",
     );
 
-    const resultDir = path.join(tempDir, "output", "result");
+    const resultDir = path.join(tempDir, "output", "123456789012345");
     await fs.mkdir(resultDir, { recursive: true });
     await fs.writeFile(path.join(resultDir, "output.json"), "[]", "utf8");
 
     const config = loadAnalysisConfig([], tempDir);
     assert.equal(config.inputDir, resultDir);
     assert.equal(config.inputPostsFile, path.join(resultDir, "output.json"));
-    assert.equal(config.outputDir, path.join(tempDir, "output", "xlsx"));
+    assert.equal(config.outputDir, resultDir);
   } finally {
     restoreEnv(previousEnv);
     await fs.rm(tempDir, { recursive: true, force: true });

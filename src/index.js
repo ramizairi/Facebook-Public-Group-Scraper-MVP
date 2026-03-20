@@ -35,6 +35,10 @@ export async function runCliMain(
       runAnalysis: (scrapeResult) =>
         runAnalysisWorkflow([], config.cwd, {
           posts: scrapeResult?.posts,
+          envOverrides: {
+            ANALYZER_INPUT_DIR: config.outputDir,
+            ANALYZER_OUTPUT_DIR: config.outputDir,
+          },
         }),
     });
 

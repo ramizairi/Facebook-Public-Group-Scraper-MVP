@@ -10,6 +10,7 @@ import { runScraper } from "../core/run-scraper.js";
 import { createLogger } from "../output/logger.js";
 import { runScheduledWorkflow } from "../schedule/run-scheduled.js";
 import { sanitizeConfigForLog } from "../utils/redact.js";
+import { deriveOutputSlug } from "../utils/facebook-url.js";
 import {
   buildApifyProxyOptions,
   buildConfigEnvOverrides,
@@ -85,7 +86,7 @@ export async function runApifyMain(cwd = process.cwd()) {
       "..",
       "actor-work",
     );
-    config.outputDir = path.join(actorWorkDir, "result");
+    config.outputDir = path.join(actorWorkDir, deriveOutputSlug(config.groupUrl));
     config.sessionStateDir = path.join(config.outputDir, "session-state");
     const outputManager = await ApifyOutputManager.create();
     const logger = createLogger(outputManager.paths.logFile);
@@ -129,7 +130,8 @@ export async function runApifyMain(cwd = process.cwd()) {
             posts: lastScrapeResult?.posts,
             envOverrides: {
               ...envOverrides,
-              ANALYZER_OUTPUT_DIR: path.join(actorWorkDir, "xlsx"),
+              ANALYZER_INPUT_DIR: config.outputDir,
+              ANALYZER_OUTPUT_DIR: config.outputDir,
             },
           }),
       });
@@ -142,7 +144,8 @@ export async function runApifyMain(cwd = process.cwd()) {
           posts: scrapeResult?.posts,
           envOverrides: {
             ...envOverrides,
-            ANALYZER_OUTPUT_DIR: path.join(actorWorkDir, "xlsx"),
+            ANALYZER_INPUT_DIR: config.outputDir,
+            ANALYZER_OUTPUT_DIR: config.outputDir,
           },
         });
       }

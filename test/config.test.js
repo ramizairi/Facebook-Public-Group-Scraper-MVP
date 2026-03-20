@@ -89,8 +89,8 @@ test("loadConfig uses .env defaults and lets CLI override them", async () => {
     assert.equal(config.proxy.server, "http://proxy.example:8080");
     assert.equal(config.proxyPoolDir, path.join(tempDir, "proxy", "socket5"));
     assert.equal(config.resume, true);
-    assert.ok(config.outputDir.endsWith(path.join("output", "result")));
-    assert.ok(config.sessionStateDir.endsWith(path.join("output", "result", "session-state")));
+    assert.ok(config.outputDir.endsWith(path.join("output", "override-group")));
+    assert.ok(config.sessionStateDir.endsWith(path.join("output", "override-group", "session-state")));
   } finally {
     restoreEnv(previousEnv);
     await fs.rm(tempDir, { recursive: true, force: true });
@@ -123,7 +123,7 @@ test("loadConfig lets CLI override the cookies file path", async () => {
   }
 });
 
-test("loadConfig ignores OUTPUT_DIR from .env and uses the cumulative output/result folder", async () => {
+test("loadConfig ignores OUTPUT_DIR from .env and uses the group-specific output folder", async () => {
   const previousEnv = snapshotEnv();
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "fb-config-test-"));
 
@@ -139,14 +139,14 @@ test("loadConfig ignores OUTPUT_DIR from .env and uses the cumulative output/res
     );
 
     const config = loadConfig([], tempDir);
-    assert.equal(config.outputDir, path.join(tempDir, "output", "result"));
+    assert.equal(config.outputDir, path.join(tempDir, "output", "blank-output-group"));
   } finally {
     restoreEnv(previousEnv);
     await fs.rm(tempDir, { recursive: true, force: true });
   }
 });
 
-test("loadConfig uses the cumulative output/result folder for resume runs", async () => {
+test("loadConfig uses the same group-specific output folder for resume runs", async () => {
   const previousEnv = snapshotEnv();
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "fb-config-test-"));
 
@@ -162,7 +162,7 @@ test("loadConfig uses the cumulative output/result folder for resume runs", asyn
     );
 
     const config = loadConfig(["--resume"], tempDir);
-    assert.equal(config.outputDir, path.join(tempDir, "output", "result"));
+    assert.equal(config.outputDir, path.join(tempDir, "output", "resume-group"));
   } finally {
     restoreEnv(previousEnv);
     await fs.rm(tempDir, { recursive: true, force: true });

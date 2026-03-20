@@ -4,6 +4,7 @@ import { config as loadDotEnv } from "dotenv";
 import { z } from "zod";
 
 import { resolveLatestResultDir } from "../utils/output-dir.js";
+import { normalizeGroupUrl } from "../utils/facebook-url.js";
 
 const BOOLEAN_TRUE = new Set(["1", "true", "yes", "on"]);
 const BOOLEAN_FALSE = new Set(["0", "false", "no", "off"]);
@@ -117,7 +118,10 @@ export function loadAnalysisConfig(
     ...(options.envOverrides ?? {}),
   };
 
-  const latestResultDir = resolveLatestResultDir(cwd);
+  const analysisGroupUrl = normalizeGroupUrl(
+    pickFirstNonEmpty(cli["group-url"], cli.url, env.GROUP_URL),
+  );
+  const latestResultDir = resolveLatestResultDir(cwd, { groupUrl: analysisGroupUrl });
   const rawInputDir = pickFirstNonEmpty(cli["input-dir"], env.ANALYZER_INPUT_DIR, latestResultDir);
   const rawGeminiApiKey = pickFirstNonEmpty(cli["gemini-api-key"], env.GEMINI_API_KEY);
   const useUnfilteredPosts = parseBoolean(
@@ -146,7 +150,7 @@ export function loadAnalysisConfig(
     inputPostsFile,
     useUnfilteredPosts,
     maxPostsToAnalyze: parseNumber(cli["max-posts-to-analyze"] ?? env.MAX_POSTS_TO_ANALYZE, null),
-    outputDir: path.resolve(cwd, pickFirstNonEmpty(cli["analyzer-output-dir"], env.ANALYZER_OUTPUT_DIR, "output/xlsx")),
+    outputDir: path.resolve(cwd, pickFirstNonEmpty(cli["analyzer-output-dir"], env.ANALYZER_OUTPUT_DIR, rawInputDir)),
     outputFile: pickFirstNonEmpty(cli["analyzer-output-file"], env.ANALYZER_OUTPUT_FILE, "output.xlsx"),
     cwd,
   });

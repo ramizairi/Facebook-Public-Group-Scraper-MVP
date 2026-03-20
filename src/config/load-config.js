@@ -185,7 +185,7 @@ export function loadConfig(
   const groupUrl = rawGroupUrl ? normalizeGroupUrl(rawGroupUrl) : null;
   const resume = parseBoolean(cli.resume, true);
   const noProxy = parseBoolean(cli["no-proxy"], false);
-  const rawOutputDir = pickFirstNonEmpty(cli["output-dir"]) ?? resolveAutoOutputDir(cwd, { resume });
+  const rawOutputDir = pickFirstNonEmpty(cli["output-dir"]) ?? resolveAutoOutputDir(cwd, { groupUrl });
   const proxyServer = noProxy ? "" : (pickFirstNonEmpty(cli["proxy-server"], env.PROXY_SERVER) ?? "");
   const proxyUsername = noProxy ? "" : (pickFirstNonEmpty(cli["proxy-username"], env.PROXY_USERNAME) ?? "");
   const proxyPassword = noProxy ? "" : (pickFirstNonEmpty(cli["proxy-password"], env.PROXY_PASSWORD) ?? "");
