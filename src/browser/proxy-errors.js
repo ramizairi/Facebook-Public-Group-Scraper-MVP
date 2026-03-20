@@ -5,6 +5,7 @@ const RETRIABLE_PROXY_ERROR_PATTERNS = [
   /ERR_NO_SUPPORTED_PROXIES/i,
   /ERR_SOCKS_CONNECTION_FAILED/i,
   /ERR_CONNECTION_(?:CLOSED|RESET|TIMED_OUT|REFUSED|FAILED)/i,
+  /page\.goto: Timeout \d+ms exceeded/i,
   /Proxy CONNECT aborted/i,
   /Browser does not support socks5 proxy authentication/i,
   /\bECONNREFUSED\b/i,

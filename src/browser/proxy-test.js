@@ -1,5 +1,5 @@
 import { closeBrowserSession, launchBrowserSession } from "./session.js";
-import { ProxyPool } from "./proxy-pool.js";
+import { normalizeProxyConfig, ProxyPool } from "./proxy-pool.js";
 import { safeJsonParse } from "../utils/safe-json.js";
 
 async function testSingleProxy(config, selectedProxy) {
@@ -97,6 +97,22 @@ export async function runProxyTest(config, outputManager, logger) {
       throw new Error("No working proxies passed the outbound proxy test.");
     }
 
+    return payload;
+  }
+
+  if (config.apifyProxyConfiguration) {
+    const proxyUrl = await config.apifyProxyConfiguration.newUrl("proxy-test");
+    const selectedProxy = proxyUrl ? normalizeProxyConfig({ server: proxyUrl }, "http") : null;
+    if (!selectedProxy) {
+      throw new Error("Apify proxy configuration did not return a usable proxy URL.");
+    }
+    const payload = await testSingleProxy(config, selectedProxy);
+    await outputManager.writeDebugJson("proxy-test.json", payload);
+    await outputManager.writeStats({
+      mode: "proxy-test",
+      ...payload,
+    });
+    console.log(`proxy-test | ok=${payload.ok} | status=${payload.status ?? "n/a"} | attempts=1`);
     return payload;
   }
 

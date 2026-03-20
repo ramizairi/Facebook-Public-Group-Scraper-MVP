@@ -97,6 +97,7 @@ const ConfigSchema = z
     maxPosts: z.number().int().positive(),
     runtimeMinutes: z.number().positive().nullable(),
     outputDir: z.string().min(1),
+    cookiesFile: z.string().min(1).nullable(),
     resume: z.boolean(),
     testProxy: z.boolean(),
     noProxy: z.boolean(),
@@ -167,11 +168,18 @@ const ConfigSchema = z
     }
   });
 
-export function loadConfig(argv = process.argv.slice(2), cwd = process.cwd()) {
+export function loadConfig(
+  argv = process.argv.slice(2),
+  cwd = process.cwd(),
+  envOverrides = {},
+) {
   loadDotEnv({ path: path.join(cwd, ".env"), override: false, quiet: true });
 
   const cli = parseArgs(argv);
-  const env = process.env;
+  const env = {
+    ...process.env,
+    ...envOverrides,
+  };
 
   const rawGroupUrl = pickFirstNonEmpty(cli.url, env.GROUP_URL);
   const groupUrl = rawGroupUrl ? normalizeGroupUrl(rawGroupUrl) : null;
@@ -198,6 +206,9 @@ export function loadConfig(argv = process.argv.slice(2), cwd = process.cwd()) {
     maxPosts: parseNumber(cli["max-posts"] ?? env.MAX_POSTS, 100),
     runtimeMinutes: parseNumber(cli["runtime-minutes"] ?? env.RUNTIME_MINUTES, null),
     outputDir: path.resolve(cwd, rawOutputDir),
+    cookiesFile: pickFirstNonEmpty(cli["cookies-file"], env.COOKIES_FILE)
+      ? path.resolve(cwd, pickFirstNonEmpty(cli["cookies-file"], env.COOKIES_FILE))
+      : null,
     resume,
     testProxy: parseBoolean(cli["test-proxy"], false),
     noProxy,

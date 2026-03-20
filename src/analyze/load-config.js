@@ -105,10 +105,17 @@ const AnalysisConfigSchema = z.object({
   cwd: z.string().min(1),
 });
 
-export function loadAnalysisConfig(argv = process.argv.slice(2), cwd = process.cwd()) {
+export function loadAnalysisConfig(
+  argv = process.argv.slice(2),
+  cwd = process.cwd(),
+  options = {},
+) {
   loadDotEnv({ path: path.join(cwd, ".env"), override: false, quiet: true });
   const cli = parseArgs(argv);
-  const env = process.env;
+  const env = {
+    ...process.env,
+    ...(options.envOverrides ?? {}),
+  };
 
   const latestResultDir = resolveLatestResultDir(cwd);
   const rawInputDir = pickFirstNonEmpty(cli["input-dir"], env.ANALYZER_INPUT_DIR, latestResultDir);
@@ -147,7 +154,7 @@ export function loadAnalysisConfig(argv = process.argv.slice(2), cwd = process.c
     cwd,
   });
 
-  if (!fs.existsSync(config.inputPostsFile)) {
+  if (options.requireInputFile !== false && !fs.existsSync(config.inputPostsFile)) {
     throw new Error(`Analyzer input file not found: ${config.inputPostsFile}`);
   }
 

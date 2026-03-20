@@ -1,0 +1,199 @@
+{
+  "title": "Facebook Public Group Scraper",
+  "type": "object",
+  "schemaVersion": 1,
+  "required": ["groupUrl"],
+  "properties": {
+    "groupUrl": {
+      "title": "Group URL",
+      "type": "string",
+      "description": "Public Facebook group URL to scrape.",
+      "editor": "textfield",
+      "prefill": "https://www.facebook.com/groups/525468629029673/"
+    },
+    "maxPosts": {
+      "title": "Max posts",
+      "type": "integer",
+      "description": "Upper bound for accepted unique posts in one run.",
+      "editor": "number",
+      "default": 100
+    },
+    "runtimeMinutes": {
+      "title": "Runtime limit (minutes)",
+      "type": "integer",
+      "description": "Optional per-run time limit.",
+      "editor": "number"
+    },
+    "runAnalyzerAtEnd": {
+      "title": "Run XLSX analyzer after scrape",
+      "type": "boolean",
+      "description": "Runs the Gemini XLSX enrichment step after a single scrape run. Requires GEMINI_API_KEY in Actor environment variables.",
+      "editor": "checkbox",
+      "default": false
+    },
+    "scheduleTotalMinutes": {
+      "title": "Internal schedule total minutes",
+      "type": "integer",
+      "description": "Optional. Keeps the Actor alive for repeated scrape cycles inside one run. On Apify, prefer platform schedules unless you need in-run accumulation.",
+      "editor": "number"
+    },
+    "scheduleIntervalMinutes": {
+      "title": "Internal schedule interval",
+      "type": "integer",
+      "description": "Minutes between internal scrape cycles when scheduleTotalMinutes is set.",
+      "editor": "number",
+      "default": 15
+    },
+    "scheduleRunAnalyzer": {
+      "title": "Run analyzer at schedule end",
+      "type": "boolean",
+      "description": "Runs the XLSX analyzer after the final internal schedule cycle.",
+      "editor": "checkbox",
+      "default": true
+    },
+    "proxyConfiguration": {
+      "title": "Proxy configuration",
+      "type": "object",
+      "description": "Use Apify Proxy or provide your own proxy URLs.",
+      "editor": "proxy",
+      "prefill": {
+        "useApifyProxy": true,
+        "apifyProxyGroups": []
+      },
+      "default": {
+        "useApifyProxy": true,
+        "apifyProxyGroups": []
+      }
+    },
+    "proxyCountryCode": {
+      "title": "Apify proxy country",
+      "type": "string",
+      "description": "Optional two-letter country code for Apify Proxy exit IPs. Leave it empty to use any available country. If the selected country has no usable proxies, the Actor falls back to the same proxy setup without a fixed country.",
+      "editor": "textfield"
+    },
+    "headless": {
+      "title": "Headless",
+      "editor": "checkbox",
+      "type": "boolean",
+      "description": "Run Chromium in headless mode.",
+      "default": true
+    },
+    "sessionStateEnabled": {
+      "title": "Persist anonymous session state",
+      "type": "boolean",
+      "description": "Reuses anonymous browser storage state across session restarts within one Actor run.",
+      "editor": "checkbox",
+      "default": true
+    },
+    "sessionStateTtlHours": {
+      "title": "Session state TTL hours",
+      "editor": "number",
+      "type": "integer",
+      "description": "How long anonymous session state can be reused before it expires.",
+      "default": 72
+    },
+    "startupRetries": {
+      "title": "Startup retries",
+      "editor": "number",
+      "type": "integer",
+      "description": "How many startup retries are allowed before the run fails.",
+      "default": 2
+    },
+    "startupSettleMs": {
+      "title": "Startup settle ms",
+      "editor": "number",
+      "type": "integer",
+      "description": "Delay after initial navigation before startup block checks and extraction.",
+      "default": 1500
+    },
+    "homeWarmup": {
+      "title": "Warm Facebook home first",
+      "editor": "checkbox",
+      "type": "boolean",
+      "description": "Open facebook.com first to bootstrap anonymous cookies before visiting the group.",
+      "default": true
+    },
+    "homeWarmupDelayMs": {
+      "title": "Warmup delay ms",
+      "editor": "number",
+      "type": "integer",
+      "description": "Additional delay after the Facebook home warmup step.",
+      "default": 300
+    },
+    "minDelayMs": {
+      "title": "Min delay ms",
+      "editor": "number",
+      "type": "integer",
+      "description": "Minimum randomized delay between feed advance attempts.",
+      "default": 1200
+    },
+    "maxDelayMs": {
+      "title": "Max delay ms",
+      "editor": "number",
+      "type": "integer",
+      "description": "Maximum randomized delay between feed advance attempts.",
+      "default": 2800
+    },
+    "noNewPostCycles": {
+      "title": "No-new-post cycles",
+      "editor": "number",
+      "type": "integer",
+      "description": "Stop after this many consecutive cycles without new accepted posts or feed progress.",
+      "default": 4
+    },
+    "networkStallRecycleCycles": {
+      "title": "Network stall recycle cycles",
+      "editor": "number",
+      "type": "integer",
+      "description": "Recycle the browser session after this many consecutive cycles without fresh network progress.",
+      "default": 2
+    },
+    "maxNetworkStallRestarts": {
+      "title": "Max network stall restarts",
+      "editor": "number",
+      "type": "integer",
+      "description": "Maximum number of browser restarts allowed to recover from network stalls in one run.",
+      "default": 2
+    },
+    "browserRecycleRequests": {
+      "title": "Browser recycle requests",
+      "editor": "number",
+      "type": "integer",
+      "description": "Recycle the browser after this many requests to keep long runs stable.",
+      "default": 250
+    },
+    "browserLocale": {
+      "title": "Browser locale",
+      "editor": "textfield",
+      "type": "string",
+      "description": "Locale reported by the browser context.",
+      "default": "en-US"
+    },
+    "browserTimezone": {
+      "title": "Browser timezone",
+      "type": "string",
+      "description": "Optional timezone ID, for example Africa/Tunis.",
+      "editor": "textfield"
+    },
+    "userAgent": {
+      "title": "User agent",
+      "editor": "textfield",
+      "type": "string",
+      "description": "User agent string used by Playwright.",
+      "default": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
+    },
+    "maxPostsToAnalyze": {
+      "title": "Max posts to analyze",
+      "type": "integer",
+      "description": "Optional cap for the XLSX analyzer.",
+      "editor": "number"
+    },
+    "analyzerUseUnfilteredPosts": {
+      "title": "Analyze unfiltered posts",
+      "editor": "checkbox",
+      "type": "boolean",
+      "description": "Use posts.unfiltered.json as the analyzer source instead of the filtered posts set.",
+      "default": false
+    }
+  }
+}
