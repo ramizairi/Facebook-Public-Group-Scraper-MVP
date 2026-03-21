@@ -7,9 +7,53 @@ const RESERVED_KEYS = new Set([
   "weekday",
   "profile_name",
   "post",
+  "reaction_count",
+  "comment_count",
+  "share_count",
   "gemini_summary",
   "gemini_confidence",
 ]);
+
+const REQUIRED_DYNAMIC_COLUMNS = [
+  {
+    aliases: new Set([
+      "intent",
+      "post_intent",
+      "status",
+      "post_status",
+      "offer_or_request",
+      "request_or_offer",
+      "listing_intent",
+      "listing_status",
+      "transaction_intent",
+      "transaction_status",
+    ]),
+    column: {
+      key: "intent",
+      label: "Intent",
+      type: "string",
+      description:
+        "Primary intent of the post in a reusable way for this group, such as offer, request, sale, wanted, job_offer, job_seeker, rental_offer, rental_search, service_offer, service_request, announcement, question, complaint, or discussion.",
+    },
+  },
+  {
+    aliases: new Set([
+      "profile_gender",
+      "gender",
+      "author_gender",
+      "name_gender",
+      "profile_name_gender",
+      "gender_from_name",
+    ]),
+    column: {
+      key: "profile_gender",
+      label: "Profile Gender",
+      type: "string",
+      description:
+        "Gender inferred from profile_name only when the name strongly suggests it. Use concise values such as male or female, and return null when unclear, ambiguous, shared, or non-personal.",
+    },
+  },
+];
 
 export const AnalysisColumnSchema = z.object({
   key: z.string().min(1),
@@ -29,13 +73,20 @@ export const DEFAULT_ANALYSIS_PLAN = Object.freeze({
   group_type: "general-community",
   sheet_name: "group_analysis",
   summary:
-    "General Facebook group analysis. Extract the post intent, topic, location, contact details, and any explicit price or time information.",
+    "General Facebook group analysis. Extract the post intent, profile-name gender when inferable, topic, location, contact details, and any explicit price or time information.",
   columns: [
     {
       key: "intent",
       label: "Intent",
       type: "string",
       description: "Primary intent of the post, such as offer, request, sale, announcement, question, or discussion.",
+    },
+    {
+      key: "profile_gender",
+      label: "Profile Gender",
+      type: "string",
+      description:
+        "Gender inferred from profile_name only when the name strongly suggests it. Use concise values such as male or female, and return null when unclear, ambiguous, shared, or non-personal.",
     },
     {
       key: "topic",
@@ -83,6 +134,15 @@ function sanitizeKey(value, index) {
   return RESERVED_KEYS.has(candidate) ? `${candidate}_value` : candidate;
 }
 
+function normalizeIdentity(value) {
+  return `${value ?? ""}`
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
 function sanitizeLabel(value, fallback) {
   const normalized = `${value ?? ""}`.replace(/\s+/g, " ").trim();
   return normalized || fallback;
@@ -95,6 +155,22 @@ function sanitizeSheetName(value) {
     .trim();
 
   return (normalized || DEFAULT_ANALYSIS_PLAN.sheet_name).slice(0, 31);
+}
+
+function hasSemanticColumn(columns, aliases) {
+  return columns.some((column) => {
+    const normalizedKey = normalizeIdentity(column.key);
+    const normalizedLabel = normalizeIdentity(column.label);
+    return aliases.has(normalizedKey) || aliases.has(normalizedLabel);
+  });
+}
+
+function ensureRequiredColumns(columns) {
+  const missingColumns = REQUIRED_DYNAMIC_COLUMNS
+    .filter(({ aliases }) => !hasSemanticColumn(columns, aliases))
+    .map(({ column }) => ({ ...column }));
+
+  return [...missingColumns, ...columns].slice(0, 10);
 }
 
 export function normalizeAnalysisPlan(input) {
@@ -118,7 +194,9 @@ export function normalizeAnalysisPlan(input) {
     });
   }
 
-  if (!columns.length) {
+  const finalColumns = ensureRequiredColumns(columns);
+
+  if (!finalColumns.length) {
     return DEFAULT_ANALYSIS_PLAN;
   }
 
@@ -126,7 +204,7 @@ export function normalizeAnalysisPlan(input) {
     group_type: sanitizeLabel(source.group_type, DEFAULT_ANALYSIS_PLAN.group_type),
     sheet_name: sanitizeSheetName(source.sheet_name),
     summary: sanitizeLabel(source.summary, DEFAULT_ANALYSIS_PLAN.summary),
-    columns,
+    columns: finalColumns,
   };
 }
 

@@ -103,6 +103,9 @@ test("buildRow includes post text with textPreview fallback", () => {
       createdAt: "2026-03-18T18:31:13.000Z",
       authorName: "Test User",
       text: "Slm, Je cherche une place de tunis a sousse demain a partir de 15h",
+      reactionCount: 5,
+      commentCount: 2,
+      shareCount: 1,
       rawFragment: { textPreview: "preview text" },
     },
     {
@@ -119,6 +122,9 @@ test("buildRow includes post text with textPreview fallback", () => {
   assert.equal(withText.post, "Slm, Je cherche une place de tunis a sousse demain a partir de 15h");
   assert.equal(withText.calendar_week, "2026-W12");
   assert.equal(withText.weekday, "Wednesday");
+  assert.equal(withText.reaction_count, 5);
+  assert.equal(withText.comment_count, 2);
+  assert.equal(withText.share_count, 1);
   assert.equal(withText.gemini_summary, "Ride request from Tunis to Sousse tomorrow after 15:00.");
   assert.equal(withText.status, "request");
   assert.equal(withText.route, "Tunis -> Sousse");
@@ -161,15 +167,21 @@ test("normalizeAnalysisPlan sanitizes dynamic columns and falls back safely", ()
   });
 
   assert.equal(plan.sheet_name, "Buy Sell Tunis");
-  assert.equal(plan.columns[0].key, "price_or_budget");
-  assert.equal(plan.columns[1].key, "post_value");
+  assert.ok(plan.columns.some((column) => column.key === "intent"));
+  assert.ok(plan.columns.some((column) => column.key === "profile_gender"));
+  assert.ok(plan.columns.some((column) => column.key === "price_or_budget"));
+  assert.ok(plan.columns.some((column) => column.key === "post_value"));
 });
 
 test("buildWorkbookColumns combines fixed and dynamic columns", () => {
   const columns = buildWorkbookColumns(DEFAULT_ANALYSIS_PLAN);
   assert.equal(columns[0].key, "post_url");
   assert.equal(columns[0].label, "Post URL");
-  assert.equal(columns[6].key, "gemini_summary");
+  assert.ok(columns.some((column) => column.key === "reaction_count"));
+  assert.ok(columns.some((column) => column.key === "comment_count"));
+  assert.ok(columns.some((column) => column.key === "share_count"));
+  assert.ok(columns.some((column) => column.key === "gemini_summary"));
+  assert.ok(columns.some((column) => column.key === "gemini_confidence"));
   assert.ok(columns.some((column) => column.key === DEFAULT_ANALYSIS_PLAN.columns[0].key));
 });
 
