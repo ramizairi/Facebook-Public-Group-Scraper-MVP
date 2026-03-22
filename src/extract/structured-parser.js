@@ -1,8 +1,64 @@
 import { classifyDocumentHtml } from "./classifier.js";
-import { extractPostInfoFromUrl, normalizeGroupUrl } from "../utils/facebook-url.js";
+import { extractGroupSlugOrId, extractPostInfoFromUrl, normalizeGroupUrl } from "../utils/facebook-url.js";
 import { safeJsonParse, safeJsonParseMany, stripFacebookPrefix } from "../utils/safe-json.js";
 
 const SCRIPT_JSON_REGEX = /<script\b[^>]*type=["']application\/json["'][^>]*>([\s\S]*?)<\/script>/gi;
+const MESSAGE_RECURSION_KEYS = new Set([
+  "message",
+  "message_preferred_body",
+  "preferred_body",
+  "preferred_body_renderer",
+  "body",
+  "body_renderer",
+  "translation",
+  "comet_sections",
+  "content",
+  "story",
+  "context_layout",
+  "attachments",
+  "message_container",
+  "shareable_from_perspective_of_feed_ufi",
+  "shareable",
+  "attached_story",
+]);
+const CANDIDATE_DISCOVERY_KEYS = new Set([
+  "feedback",
+  "attachments",
+  "attachment",
+  "story_attachment",
+  "story_attachments",
+  "comet_sections",
+  "content",
+  "story",
+  "context_layout",
+  "message_container",
+  "shareable_from_perspective_of_feed_ufi",
+  "shareable",
+  "attached_story",
+  "native_template_view",
+  "target",
+  "target_group",
+  "associated_group",
+  "group",
+  "to",
+]);
+const SHALLOW_PLUGIN_KEYS = new Set([
+  "__typename",
+  "group_id",
+  "post_id",
+  "top_level_post_id",
+  "mf_story_key",
+  "tracking",
+]);
+const STORY_TYPENAME_HINTS = [
+  "story",
+  "feedunit",
+  "feed_unit",
+  "shareable",
+  "groupmallpost",
+  "groupent",
+  "groupscometfeed",
+];
 function uniqBy(items, keySelector) {
   const seen = new Set();
   const result = [];
@@ -67,8 +123,59 @@ function isUsefulMessageText(value) {
   return normalized;
 }
 
+function collectDirectMessageCandidates(value) {
+  return [
+    value.message?.text,
+    value.message_preferred_body?.text,
+    value.preferred_body?.text,
+    value.preferred_body_renderer?.text,
+    value.body?.text,
+    value.body_renderer?.text,
+    value.translation?.message?.text,
+    value.translation?.preferred_body?.text,
+    value.translation?.body?.text,
+    value.translation?.body_renderer?.text,
+    value.story?.message?.text,
+    value.story?.preferred_body?.text,
+    value.story?.body?.text,
+    value.story?.body_renderer?.text,
+    value.story?.message_container?.story?.message?.text,
+    value.story?.message_container?.story?.preferred_body?.text,
+    value.story?.message_container?.story?.body?.text,
+    value.story?.message_container?.story?.body_renderer?.text,
+    value.message_container?.story?.message?.text,
+    value.message_container?.story?.preferred_body?.text,
+    value.message_container?.story?.body?.text,
+    value.message_container?.story?.body_renderer?.text,
+    value.comet_sections?.content?.story?.message?.text,
+    value.comet_sections?.content?.story?.preferred_body?.text,
+    value.comet_sections?.content?.story?.body?.text,
+    value.comet_sections?.content?.story?.body_renderer?.text,
+    value.comet_sections?.content?.story?.message_container?.story?.message?.text,
+    value.comet_sections?.content?.story?.message_container?.story?.preferred_body?.text,
+    value.comet_sections?.content?.story?.message_container?.story?.body?.text,
+    value.comet_sections?.content?.story?.message_container?.story?.body_renderer?.text,
+    value.comet_sections?.content?.story?.comet_sections?.message?.story?.message?.text,
+    value.comet_sections?.content?.story?.comet_sections?.message?.story?.preferred_body?.text,
+    value.comet_sections?.content?.story?.comet_sections?.message?.story?.body?.text,
+    value.comet_sections?.content?.story?.comet_sections?.message?.story?.body_renderer?.text,
+    value.comet_sections?.content?.story?.comet_sections?.message_container?.story?.message?.text,
+    value.comet_sections?.content?.story?.comet_sections?.message_container?.story?.preferred_body?.text,
+    value.comet_sections?.content?.story?.comet_sections?.message_container?.story?.body?.text,
+    value.comet_sections?.content?.story?.comet_sections?.message_container?.story?.body_renderer?.text,
+    value.comet_sections?.context_layout?.story?.message?.text,
+    value.comet_sections?.context_layout?.story?.preferred_body?.text,
+    value.comet_sections?.context_layout?.story?.body?.text,
+    value.comet_sections?.context_layout?.story?.body_renderer?.text,
+    value.shareable_from_perspective_of_feed_ufi?.message?.text,
+    value.shareable_from_perspective_of_feed_ufi?.preferred_body?.text,
+    value.shareable_from_perspective_of_feed_ufi?.body?.text,
+    value.shareable_from_perspective_of_feed_ufi?.body_renderer?.text,
+  ];
+}
+
 function findNestedMessageText(value, depth = 0) {
-  if (depth > 8 || value == null) {
+  if (depth > 12 || value == null) {
     return null;
   }
 
@@ -87,17 +194,11 @@ function findNestedMessageText(value, depth = 0) {
     return null;
   }
 
-  const directCandidates = [
-    value.message?.text,
-    value.message_preferred_body?.text,
-    value.translation?.message?.text,
-    value.comet_sections?.content?.story?.message?.text,
-    value.comet_sections?.context_layout?.story?.message?.text,
-    value.story?.message?.text,
-    value.story?.comet_sections?.content?.story?.message?.text,
-  ];
+  if (looksLikeCommentNode(value)) {
+    return null;
+  }
 
-  for (const candidate of directCandidates) {
+  for (const candidate of collectDirectMessageCandidates(value)) {
     const useful = isUsefulMessageText(candidate);
     if (useful) {
       return useful;
@@ -105,20 +206,13 @@ function findNestedMessageText(value, depth = 0) {
   }
 
   for (const [key, nestedValue] of Object.entries(value)) {
-    if (
-      key === "message" ||
-      key === "message_preferred_body" ||
-      key === "translation" ||
-      key === "comet_sections" ||
-      key === "content" ||
-      key === "story" ||
-      key === "context_layout" ||
-      key === "attachments"
-    ) {
-      const match = findNestedMessageText(nestedValue, depth + 1);
-      if (match) {
-        return match;
-      }
+    if (!MESSAGE_RECURSION_KEYS.has(key)) {
+      continue;
+    }
+
+    const match = findNestedMessageText(nestedValue, depth + 1);
+    if (match) {
+      return match;
     }
   }
 
@@ -149,6 +243,23 @@ function findActor(value, depth = 0) {
     };
   }
 
+  const directActorCandidates = [
+    value.author,
+    value.owning_profile,
+    value.actor,
+  ];
+
+  for (const candidate of directActorCandidates) {
+    const name = trimText(candidate?.name);
+    const id = getString(candidate?.id);
+    if (name || id) {
+      return {
+        name: name ?? null,
+        id,
+      };
+    }
+  }
+
   for (const nestedValue of Object.values(value)) {
     const actor = findActor(nestedValue, depth + 1);
     if (actor) {
@@ -157,6 +268,229 @@ function findActor(value, depth = 0) {
   }
 
   return null;
+}
+
+function findFirstGroupInfo(value, depth = 0) {
+  if (depth > 10 || value == null) {
+    return { id: null, url: null };
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const match = findFirstGroupInfo(item, depth + 1);
+      if (match.id || match.url) {
+        return match;
+      }
+    }
+
+    return { id: null, url: null };
+  }
+
+  if (typeof value !== "object") {
+    return { id: null, url: null };
+  }
+
+  const directCandidates = [
+    {
+      id: getString(value.associated_group?.id),
+      url: getString(value.associated_group?.url),
+    },
+    {
+      id: getString(value.target_group?.id),
+      url: getString(value.target_group?.url),
+    },
+    {
+      id: getString(value.group?.id),
+      url: getString(value.group?.url),
+    },
+    {
+      id: getString(value.to?.id),
+      url: getString(value.to?.url),
+    },
+    {
+      id: getString(value.group_id),
+      url: getString(value.group_url),
+    },
+  ];
+
+  for (const candidate of directCandidates) {
+    if (candidate.id || candidate.url) {
+      return candidate;
+    }
+  }
+
+  for (const [key, nestedValue] of Object.entries(value)) {
+    if (!CANDIDATE_DISCOVERY_KEYS.has(key)) {
+      continue;
+    }
+
+    const match = findFirstGroupInfo(nestedValue, depth + 1);
+    if (match.id || match.url) {
+      return match;
+    }
+  }
+
+  return { id: null, url: null };
+}
+
+function findFirstGroupPostUrl(value, depth = 0) {
+  if (depth > 10 || value == null) {
+    return null;
+  }
+
+  if (typeof value === "string") {
+    return extractPostInfoFromUrl(value)?.canonicalUrl ?? null;
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const match = findFirstGroupPostUrl(item, depth + 1);
+      if (match) {
+        return match;
+      }
+    }
+
+    return null;
+  }
+
+  if (typeof value !== "object") {
+    return null;
+  }
+
+  const directCandidates = [
+    value.url,
+    value.story_url,
+    value.permalink_url,
+    value.wwwURL,
+    value.override_url,
+    value.video_override_url,
+  ];
+
+  for (const candidate of directCandidates) {
+    const match = extractPostInfoFromUrl(candidate)?.canonicalUrl ?? null;
+    if (match) {
+      return match;
+    }
+  }
+
+  for (const [key, nestedValue] of Object.entries(value)) {
+    if (!CANDIDATE_DISCOVERY_KEYS.has(key)) {
+      continue;
+    }
+
+    const match = findFirstGroupPostUrl(nestedValue, depth + 1);
+    if (match) {
+      return match;
+    }
+  }
+
+  return null;
+}
+
+function recordDiagnostic(context, key, amount = 1) {
+  if (!context?.diagnostics) {
+    return;
+  }
+
+  context.diagnostics[key] = (context.diagnostics[key] ?? 0) + amount;
+}
+
+function looksLikeCommentNode(node) {
+  if (!node || typeof node !== "object" || Array.isArray(node)) {
+    return false;
+  }
+
+  const typename = typeof node.__typename === "string" ? node.__typename.toLowerCase() : "";
+  if (typename.includes("comment")) {
+    return true;
+  }
+
+  return (
+    node.depth != null ||
+    node.legacy_fbid != null ||
+    node.parent_feedback != null ||
+    node.parent_post_story != null ||
+    node.comment_action_links != null ||
+    node.comment_rendering_instance != null ||
+    node.group_comment_info != null
+  );
+}
+
+function hasStoryStructureSignals(node, directUrl, groupInfo) {
+  const typename = typeof node.__typename === "string" ? node.__typename.toLowerCase() : "";
+  if (typename && STORY_TYPENAME_HINTS.some((hint) => typename.includes(hint))) {
+    return true;
+  }
+
+  return Boolean(
+    directUrl ||
+      hasRichStoryFields(node) ||
+      groupInfo.url ||
+      groupInfo.id ||
+      node.to?.id ||
+      node.group_id ||
+      node.group_url ||
+      node.post_id ||
+      node.top_level_post_id ||
+      node.story_fbid ||
+      node.mf_story_key ||
+      node.story_url ||
+      node.permalink_url ||
+      node.wwwURL
+  );
+}
+
+function hasRichStoryFields(node) {
+  return Boolean(
+    node.feedback ||
+      node.attachments ||
+      node.comet_sections ||
+      node.message ||
+      node.preferred_body ||
+      node.preferred_body_renderer ||
+      node.body ||
+      node.body_renderer ||
+      node.story ||
+      node.message_container ||
+      node.shareable_from_perspective_of_feed_ufi ||
+      Array.isArray(node.actors) ||
+      typeof node.creation_time === "number" ||
+      typeof node.publish_time === "number" ||
+      typeof node.created_time === "number" ||
+      node.target_group ||
+      node.associated_group ||
+      node.group ||
+      node.to?.url
+  );
+}
+
+function looksLikeShallowPluginNode(node) {
+  if (!node || typeof node !== "object" || Array.isArray(node)) {
+    return false;
+  }
+
+  const hasPostIdentifiers = Boolean(
+    node.post_id || node.top_level_post_id || node.mf_story_key || node.story_fbid || node.group_id,
+  );
+  if (!hasPostIdentifiers) {
+    return false;
+  }
+
+  const keys = Object.keys(node);
+  if (!keys.length) {
+    return false;
+  }
+
+  if (hasRichStoryFields(node) || node.url || node.story_url || node.permalink_url || node.wwwURL) {
+    return false;
+  }
+
+  return keys.every(
+    (key) =>
+      SHALLOW_PLUGIN_KEYS.has(key) ||
+      key.startsWith("__module_operation_") ||
+      key.startsWith("__module_component_"),
+  );
 }
 
 function findFirstNumericMetric(value, pathHints, depth = 0, path = []) {
@@ -259,8 +593,23 @@ function extractCandidate(node, context) {
     return null;
   }
 
-  const directUrl = getString(node.url) ?? getString(node.story_url) ?? getString(node.permalink_url);
+  if (looksLikeCommentNode(node)) {
+    recordDiagnostic(context, "rejectedNoiseCandidates");
+    return null;
+  }
+
+  const directUrl =
+    getString(node.url) ??
+    getString(node.story_url) ??
+    getString(node.permalink_url) ??
+    getString(node.wwwURL) ??
+    findFirstGroupPostUrl(node);
   const tracking = parseTracking(node.tracking);
+  const groupInfo = findFirstGroupInfo(node);
+  if (looksLikeShallowPluginNode(node)) {
+    recordDiagnostic(context, "rejectedNoiseCandidates");
+    return null;
+  }
   const trackedPostId = getString(tracking.top_level_post_id) ?? getString(tracking.mf_story_key);
   const postId =
     getString(node.post_id) ??
@@ -270,11 +619,22 @@ function extractCandidate(node, context) {
     trackedPostId;
   const postInfo = extractPostInfoFromUrl(directUrl);
   const stablePostId = postInfo?.postId ?? postId;
+  const requestedGroupSlugOrId = extractGroupSlugOrId(context.groupUrl);
+  const requestedNumericGroupId =
+    requestedGroupSlugOrId && /^\d+$/.test(requestedGroupSlugOrId) ? requestedGroupSlugOrId : null;
   const effectiveGroupUrl =
     normalizeGroupUrl(node.groupUrl) ??
+    (requestedNumericGroupId && groupInfo.id === requestedNumericGroupId
+      ? context.groupUrl
+      : normalizeGroupUrl(groupInfo.url)) ??
     (postInfo ? `https://www.facebook.com/groups/${postInfo.groupSlugOrId}/` : context.groupUrl);
 
   if (!stablePostId || !effectiveGroupUrl) {
+    return null;
+  }
+
+  if (!hasStoryStructureSignals(node, directUrl, groupInfo)) {
+    recordDiagnostic(context, "rejectedNoiseCandidates");
     return null;
   }
 
@@ -284,6 +644,8 @@ function extractCandidate(node, context) {
       ? node.creation_time
       : typeof node.publish_time === "number"
         ? node.publish_time
+        : typeof node.created_time === "number"
+          ? node.created_time
         : findFirstNumericMetric(node, ["creation_time", "publish_time"]);
 
   return {
@@ -360,6 +722,7 @@ export function extractStructuredPostsFromPayload(payload, context) {
         sourceLabel: "network-response",
         sourceUrl: payload.url,
         groupUrl: context.groupUrl,
+        diagnostics: context.diagnostics,
       }),
     );
   }
@@ -392,6 +755,7 @@ export function extractStructuredPostsFromDocument(html, context) {
         sourceLabel: "document-embedded-json",
         sourceUrl: context.groupUrl,
         groupUrl: context.groupUrl,
+        diagnostics: context.diagnostics,
       }),
     );
   }

@@ -5,8 +5,13 @@ const RESERVED_KEYS = new Set([
   "created_at",
   "calendar_week",
   "weekday",
+  "group_type",
   "profile_name",
+  "source_language",
   "post",
+  "post_english",
+  "analysis_summary_en",
+  "analysis_confidence",
   "reaction_count",
   "comment_count",
   "share_count",
@@ -219,9 +224,9 @@ export function buildPlanResponseJsonSchema() {
         type: "string",
         description: "Short Excel sheet name for the main analysis tab.",
       },
-      summary: {
-        type: "string",
-        description: "Short summary of what matters when extracting posts from this group.",
+        summary: {
+          type: "string",
+          description: "Short summary of what matters when extracting posts from this group.",
       },
       columns: {
         type: "array",
@@ -286,7 +291,15 @@ export function buildBatchAnalysisResponseJsonSchema(plan) {
             },
             summary: {
               type: ["string", "null"],
-              description: "Short one-line summary of the post.",
+              description: "Short one-line English summary of the post for BI-friendly reporting.",
+            },
+            source_language: {
+              type: ["string", "null"],
+              description: "Primary source language of the post, using concise English labels such as arabic, french, english, arabizi, mixed, or unknown.",
+            },
+            translated_post_en: {
+              type: ["string", "null"],
+              description: "Clear English translation of the original post text. Preserve meaning and proper nouns.",
             },
             confidence: {
               type: ["number", "null"],
@@ -299,12 +312,51 @@ export function buildBatchAnalysisResponseJsonSchema(plan) {
               required: plan.columns.map((column) => column.key),
             },
           },
-          required: ["index", "summary", "confidence", "values"],
+          required: ["index", "summary", "source_language", "translated_post_en", "confidence", "values"],
         },
       },
     },
     required: ["items"],
   };
+}
+
+function normalizeLanguageLabel(value) {
+  const normalized = `${value ?? ""}`
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+  if (!normalized) {
+    return null;
+  }
+
+  if (normalized.includes("mixed")) {
+    return "mixed";
+  }
+
+  if (normalized.includes("arabizi")) {
+    return "arabizi";
+  }
+
+  if (normalized.includes("arabic") || normalized === "ar") {
+    return "arabic";
+  }
+
+  if (normalized.includes("french") || normalized === "fr") {
+    return "french";
+  }
+
+  if (normalized.includes("english") || normalized === "en") {
+    return "english";
+  }
+
+  if (normalized.includes("unknown")) {
+    return "unknown";
+  }
+
+  return normalized;
 }
 
 export function normalizeAnalysisItem(item, plan) {
@@ -334,6 +386,9 @@ export function normalizeAnalysisItem(item, plan) {
   return {
     index: Number.isInteger(item?.index) ? item.index : -1,
     summary: item?.summary == null ? null : `${item.summary}`.trim() || null,
+    sourceLanguage: normalizeLanguageLabel(item?.source_language),
+    translatedPostEn:
+      item?.translated_post_en == null ? null : `${item.translated_post_en}`.trim() || null,
     confidence:
       item?.confidence == null || !Number.isFinite(Number(item.confidence))
         ? null

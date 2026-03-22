@@ -66,21 +66,23 @@ export class OutputManager {
 
   async resetPosts(posts, unfilteredPosts = posts) {
     await fs.writeFile(this.paths.outputJson, safeJsonStringify(toOutputRows(posts)), "utf8");
-    await fs.writeFile(this.paths.postsJson, safeJsonStringify(unfilteredPosts), "utf8");
-    const unfilteredJsonl = unfilteredPosts.map((post) => JSON.stringify(post)).join("\n");
-    await fs.writeFile(this.paths.postsJsonl, unfilteredJsonl ? `${unfilteredJsonl}\n` : "", "utf8");
+    await fs.writeFile(this.paths.postsJson, safeJsonStringify(posts), "utf8");
+    const jsonl = posts.map((post) => JSON.stringify(post)).join("\n");
+    await fs.writeFile(this.paths.postsJsonl, jsonl ? `${jsonl}\n` : "", "utf8");
   }
 
   async appendPosts(posts, unfilteredPosts = posts) {
-    if (unfilteredPosts.length) {
-      const unfilteredLines = unfilteredPosts.map((post) => JSON.stringify(post)).join("\n");
-      await fs.appendFile(this.paths.postsJsonl, `${unfilteredLines}\n`, "utf8");
+    if (posts.length) {
+      const lines = posts.map((post) => JSON.stringify(post)).join("\n");
+      await fs.appendFile(this.paths.postsJsonl, `${lines}\n`, "utf8");
     }
   }
 
   async writePostsJson(posts, unfilteredPosts = posts) {
     await fs.writeFile(this.paths.outputJson, safeJsonStringify(toOutputRows(posts)), "utf8");
-    await fs.writeFile(this.paths.postsJson, safeJsonStringify(unfilteredPosts), "utf8");
+    await fs.writeFile(this.paths.postsJson, safeJsonStringify(posts), "utf8");
+    const jsonl = posts.map((post) => JSON.stringify(post)).join("\n");
+    await fs.writeFile(this.paths.postsJsonl, jsonl ? `${jsonl}\n` : "", "utf8");
   }
 
   async writeStats(stats) {

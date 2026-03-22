@@ -3,6 +3,7 @@ import { DedupStore } from "./dedup-store.js";
 import { detectBlockState } from "./block-detection.js";
 import { MetricsTracker } from "./metrics.js";
 import { normalizeCandidate } from "./normalize.js";
+import { mergeEnrichedPost, needsTextEnrichment, selectBestEnrichmentCandidate } from "./post-enrichment.js";
 import { isRetriableProxyError } from "../browser/proxy-errors.js";
 import { normalizeProxyConfig, ProxyPool } from "../browser/proxy-pool.js";
 import { SessionStateStore } from "../browser/session-state.js";
@@ -23,6 +24,8 @@ import {
   extractStructuredPostsFromPayload,
 } from "../extract/structured-parser.js";
 import { printProgress } from "../output/logger.js";
+
+const MAX_POST_TEXT_ENRICHMENTS_PER_RUN = 8;
 
 async function navigateToGroup(page, groupUrl) {
   await page.goto(groupUrl, {
@@ -124,21 +127,137 @@ async function advanceFeed(page, config, logger) {
   };
 }
 
+function createExtractionDiagnostics() {
+  return {
+    rejectedNoiseCandidates: 0,
+  };
+}
+
+function accumulateExtractionDiagnostics(target, diagnostics) {
+  if (!target || !diagnostics) {
+    return;
+  }
+
+  target.rejectedNoiseCandidates += diagnostics.rejectedNoiseCandidates ?? 0;
+}
+
 async function collectNetworkCandidates(networkTap, outputManager, config) {
   const payloads = networkTap.drainRelevantPayloads();
   await outputManager.writePayloadSamples(payloads);
 
   const candidates = [];
+  const diagnostics = createExtractionDiagnostics();
   for (const payload of payloads) {
-    candidates.push(...extractStructuredPostsFromPayload(payload, { groupUrl: config.groupUrl }));
+    candidates.push(
+      ...extractStructuredPostsFromPayload(payload, {
+        groupUrl: config.groupUrl,
+        diagnostics,
+      }),
+    );
   }
 
-  return candidates;
+  return {
+    candidates,
+    diagnostics,
+  };
 }
 
 async function collectDocumentCandidates(page, config) {
   const html = await page.content();
-  return extractStructuredPostsFromDocument(html, { groupUrl: config.groupUrl });
+  const diagnostics = createExtractionDiagnostics();
+  return {
+    candidates: extractStructuredPostsFromDocument(html, {
+      groupUrl: config.groupUrl,
+      diagnostics,
+    }),
+    diagnostics,
+  };
+}
+
+async function collectEnrichmentCandidates(page, networkTap, outputManager, config) {
+  const diagnostics = createExtractionDiagnostics();
+  const [documentResult, networkResult, domCandidates] = await Promise.all([
+    collectDocumentCandidates(page, config),
+    networkTap ? collectNetworkCandidates(networkTap, outputManager, config) : Promise.resolve({ candidates: [], diagnostics }),
+    extractDomPosts(page, { groupUrl: config.groupUrl }),
+  ]);
+
+  accumulateExtractionDiagnostics(diagnostics, documentResult.diagnostics);
+  accumulateExtractionDiagnostics(diagnostics, networkResult.diagnostics);
+
+  return {
+    candidates: [
+      ...networkResult.candidates,
+      ...documentResult.candidates,
+      ...domCandidates,
+    ],
+    diagnostics,
+  };
+}
+
+async function enrichPostsMissingText({
+  session,
+  networkTap,
+  outputManager,
+  config,
+  posts,
+  qualityStats,
+  logger,
+}) {
+  const candidatesForEnrichment = posts.filter(needsTextEnrichment).slice(0, MAX_POST_TEXT_ENRICHMENTS_PER_RUN);
+
+  if (!candidatesForEnrichment.length) {
+    return;
+  }
+
+  let attempted = 0;
+  let enriched = 0;
+
+  for (const post of candidatesForEnrichment) {
+    attempted += 1;
+    const currentPostInfo = extractPostInfoFromUrl(session.page.url());
+    const useCurrentPage = currentPostInfo?.postId === post.id;
+
+    if (!useCurrentPage) {
+      await session.page.goto(post.url, {
+        waitUntil: "domcontentloaded",
+      });
+      await settleStartupPage(session.page, config);
+      await session.page.waitForTimeout(500).catch(() => {});
+    }
+
+    const enrichmentResult = await collectEnrichmentCandidates(
+      session.page,
+      networkTap,
+      outputManager,
+      config,
+    );
+    accumulateExtractionDiagnostics(qualityStats, enrichmentResult.diagnostics);
+
+    const selectedCandidate = selectBestEnrichmentCandidate(
+      enrichmentResult.candidates,
+      post,
+      config.groupUrl,
+    );
+
+    if (selectedCandidate && mergeEnrichedPost(post, selectedCandidate)) {
+      enriched += 1;
+      qualityStats.enrichedPosts += 1;
+      logger.info({
+        event: "post-text-enriched",
+        id: post.id,
+        url: post.url,
+        source: selectedCandidate.rawFragment?.source ?? selectedCandidate.sourceType,
+      });
+    }
+  }
+
+  logger.info({
+    event: "text-enrichment-summary",
+    attempted,
+    enriched,
+    remainingMissingText: posts.filter(needsTextEnrichment).length,
+  });
 }
 
 function acceptCandidates({ candidates, posts, dedupStore, metrics, config }) {
@@ -147,26 +266,17 @@ function acceptCandidates({ candidates, posts, dedupStore, metrics, config }) {
   let skippedForeignGroup = 0;
 
   for (const candidate of candidates) {
-    const unfilteredNormalized = normalizeCandidate(candidate, config.groupUrl, {
-      allowShellPosts: true,
-    });
-    if (!unfilteredNormalized) {
+    const normalized = normalizeCandidate(candidate, config.groupUrl);
+    if (!normalized) {
       continue;
     }
 
-    if (!sameGroupUrl(unfilteredNormalized.groupUrl, config.groupUrl)) {
+    if (!sameGroupUrl(normalized.groupUrl, config.groupUrl)) {
       skippedForeignGroup += 1;
       continue;
     }
 
-    if (!config.unfilteredDedupStore.has(unfilteredNormalized)) {
-      config.unfilteredDedupStore.add(unfilteredNormalized);
-      config.unfilteredPosts.push(unfilteredNormalized);
-      unfilteredAccepted.push(unfilteredNormalized);
-    }
-
-    const normalized = normalizeCandidate(candidate, config.groupUrl);
-    if (!normalized || dedupStore.has(normalized)) {
+    if (dedupStore.has(normalized)) {
       continue;
     }
 
@@ -174,6 +284,11 @@ function acceptCandidates({ candidates, posts, dedupStore, metrics, config }) {
     posts.push(normalized);
     accepted.push(normalized);
     metrics.recordAccepted(normalized);
+    if (!config.unfilteredDedupStore.has(normalized)) {
+      config.unfilteredDedupStore.add(normalized);
+      config.unfilteredPosts.push(normalized);
+      unfilteredAccepted.push(normalized);
+    }
 
     if (posts.length >= config.maxPosts) {
       break;
@@ -187,12 +302,24 @@ function acceptCandidates({ candidates, posts, dedupStore, metrics, config }) {
   };
 }
 
-async function persistRunState({ config, posts, unfilteredPosts, outputManager, metrics, networkTap }) {
+async function persistRunState({
+  config,
+  posts,
+  unfilteredPosts,
+  outputManager,
+  metrics,
+  networkTap,
+  qualityStats,
+}) {
   const stats = metrics.snapshot({
     uniquePosts: posts.length,
     networkStats: networkTap.getStats(),
   });
-  stats.unfilteredUniquePosts = unfilteredPosts.length;
+  stats.postsMissingText = posts.filter(needsTextEnrichment).length;
+  stats.acceptedPostsMissingText = qualityStats?.acceptedPostsMissingText ?? 0;
+  stats.enrichedPosts = qualityStats?.enrichedPosts ?? 0;
+  stats.rejectedNoiseCandidates = qualityStats?.rejectedNoiseCandidates ?? 0;
+  stats.foreignGroupSkips = qualityStats?.foreignGroupSkips ?? 0;
   const checkpoint = buildCheckpoint({
     config,
     posts,
@@ -315,16 +442,16 @@ export async function runScraper(config, outputManager, logger) {
   const posts = checkpointMatchesGroup
     ? sanitizeStoredPosts(checkpoint?.posts, config.groupUrl)
     : [];
-  const unfilteredPosts = checkpointMatchesGroup
-    ? sanitizeStoredPosts(
-        Array.isArray(checkpoint?.unfilteredPosts) ? checkpoint.unfilteredPosts : checkpoint?.posts,
-        config.groupUrl,
-        { allowShellPosts: true },
-      )
-    : [...posts];
+  const unfilteredPosts = [...posts];
   const dedupStore = new DedupStore(posts);
   const unfilteredDedupStore = new DedupStore(unfilteredPosts);
   const metrics = new MetricsTracker(posts.length);
+  const qualityStats = {
+    acceptedPostsMissingText: 0,
+    enrichedPosts: 0,
+    rejectedNoiseCandidates: 0,
+    foreignGroupSkips: 0,
+  };
   const startedAtMs = Date.now();
   const archivedNetworkStats = {
     totalRequests: 0,
@@ -354,7 +481,7 @@ export async function runScraper(config, outputManager, logger) {
   let networkStallRestarts = 0;
   const maxBlockedSessionRotations = Math.max(config.startupRetries + 1, proxyPool?.proxies.length ?? 0);
 
-  await outputManager.resetPosts(posts, unfilteredPosts);
+  await outputManager.resetPosts(posts, posts);
 
   const buildNetworkSnapshot = () => {
     const current = networkTap?.getStats() ?? {
@@ -476,9 +603,13 @@ export async function runScraper(config, outputManager, logger) {
       await startSession(reason);
       await settleStartupPage(session.page, config);
 
+      const documentResult = await collectDocumentCandidates(session.page, config);
+      const networkResult = await collectNetworkCandidates(networkTap, outputManager, config);
+      accumulateExtractionDiagnostics(qualityStats, documentResult.diagnostics);
+      accumulateExtractionDiagnostics(qualityStats, networkResult.diagnostics);
       const freshCandidates = [
-        ...(await collectDocumentCandidates(session.page, config)),
-        ...(await collectNetworkCandidates(networkTap, outputManager, config)),
+        ...documentResult.candidates,
+        ...networkResult.candidates,
       ];
 
       let {
@@ -494,6 +625,7 @@ export async function runScraper(config, outputManager, logger) {
       });
 
       if (skippedForeignGroup > 0) {
+        qualityStats.foreignGroupSkips += skippedForeignGroup;
         logger.info({
           event: "skipped-foreign-group-posts",
           count: skippedForeignGroup,
@@ -519,6 +651,7 @@ export async function runScraper(config, outputManager, logger) {
       await outputManager.appendPosts(freshAccepted, freshUnfilteredAccepted);
       trackAcceptedPosts(freshAccepted);
       if (freshAccepted.length) {
+        qualityStats.acceptedPostsMissingText += freshAccepted.filter(needsTextEnrichment).length;
         currentSessionBootstrapped = true;
         await persistCurrentSessionState({
           reason: "bootstrap-accepted-posts",
@@ -532,6 +665,7 @@ export async function runScraper(config, outputManager, logger) {
         outputManager,
         metrics,
         networkTap: { getStats: buildNetworkSnapshot },
+        qualityStats,
       });
       printProgress(refreshedStats);
 
@@ -634,6 +768,7 @@ export async function runScraper(config, outputManager, logger) {
       outputManager,
       metrics,
       networkTap: { getStats: buildNetworkSnapshot },
+      qualityStats,
     });
 
     while (posts.length < config.maxPosts) {
@@ -650,20 +785,21 @@ export async function runScraper(config, outputManager, logger) {
       metrics.recordCycle();
       const feedAdvance = await advanceFeed(session.page, config, logger);
 
-      const cycleCandidates = collectNetworkCandidates(networkTap, outputManager, config);
-      const structuredCandidates = await cycleCandidates;
+      const structuredResult = await collectNetworkCandidates(networkTap, outputManager, config);
+      accumulateExtractionDiagnostics(qualityStats, structuredResult.diagnostics);
       let {
         accepted: networkAccepted,
         unfilteredAccepted: newlyUnfilteredAccepted,
         skippedForeignGroup,
       } = acceptCandidates({
-        candidates: structuredCandidates,
+        candidates: structuredResult.candidates,
         posts,
         dedupStore,
         metrics,
         config: acceptConfig,
       });
       if (skippedForeignGroup > 0) {
+        qualityStats.foreignGroupSkips += skippedForeignGroup;
         logger.info({
           event: "skipped-foreign-group-posts",
           count: skippedForeignGroup,
@@ -695,6 +831,7 @@ export async function runScraper(config, outputManager, logger) {
       await outputManager.appendPosts(newlyAccepted, newlyUnfilteredAccepted);
       trackAcceptedPosts(newlyAccepted);
       if (newlyAccepted.length) {
+        qualityStats.acceptedPostsMissingText += newlyAccepted.filter(needsTextEnrichment).length;
         currentSessionBootstrapped = true;
         await persistCurrentSessionState({
           reason: "accepted-posts",
@@ -710,6 +847,7 @@ export async function runScraper(config, outputManager, logger) {
         outputManager,
         metrics,
         networkTap: { getStats: buildNetworkSnapshot },
+        qualityStats,
       });
       printProgress(stats);
 
@@ -768,6 +906,7 @@ export async function runScraper(config, outputManager, logger) {
             outputManager,
             metrics,
             networkTap: { getStats: buildNetworkSnapshot },
+            qualityStats,
           });
           archiveCurrentNetworkStats();
           networkTap.detach();
@@ -821,6 +960,7 @@ export async function runScraper(config, outputManager, logger) {
           outputManager,
           metrics,
           networkTap: { getStats: buildNetworkSnapshot },
+          qualityStats,
         });
         archiveCurrentNetworkStats();
         networkTap.detach();
@@ -838,6 +978,16 @@ export async function runScraper(config, outputManager, logger) {
     });
     finalizeProxySession();
 
+    await enrichPostsMissingText({
+      session,
+      networkTap,
+      outputManager,
+      config,
+      posts,
+      qualityStats,
+      logger,
+    });
+
     const finalStats = await persistRunState({
       config,
       posts,
@@ -845,6 +995,16 @@ export async function runScraper(config, outputManager, logger) {
       outputManager,
       metrics,
       networkTap: { getStats: buildNetworkSnapshot },
+      qualityStats,
+    });
+
+    logger.info({
+      event: "quality-summary",
+      postsMissingText: finalStats.postsMissingText,
+      acceptedPostsMissingText: finalStats.acceptedPostsMissingText,
+      enrichedPosts: finalStats.enrichedPosts,
+      rejectedNoiseCandidates: finalStats.rejectedNoiseCandidates,
+      foreignGroupSkips: finalStats.foreignGroupSkips,
     });
 
     if (!posts.length) {
@@ -890,6 +1050,7 @@ export async function runScraper(config, outputManager, logger) {
         outputManager,
         metrics,
         networkTap: { getStats: () => archivedNetworkStats },
+        qualityStats,
       });
     }
 

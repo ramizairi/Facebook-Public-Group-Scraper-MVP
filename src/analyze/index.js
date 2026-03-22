@@ -7,22 +7,49 @@ import { analyzePostsWithGemini } from "./gemini-client.js";
 import { deriveCalendarWeek, deriveWeekday } from "./time-derived.js";
 import { writeAnalysisWorkbook } from "./write-xlsx.js";
 
+function coerceBiValue(value, type, { defaultString = "", defaultNumber = 0 } = {}) {
+  if (type === "number") {
+    return Number.isFinite(Number(value)) ? Number(value) : defaultNumber;
+  }
+
+  if (type === "boolean") {
+    return value === true ? 1 : 0;
+  }
+
+  if (value == null) {
+    return defaultString;
+  }
+
+  const normalized = `${value}`.trim();
+  return normalized || defaultString;
+}
+
 export function buildRow(post, analysis, plan = { columns: [] }) {
   const dynamicValues = analysis?.values ?? analysis ?? {};
   const row = {
-    post_url: post.url ?? null,
-    created_at: post.createdAt ?? null,
-    calendar_week: deriveCalendarWeek(post.createdAt),
-    weekday: deriveWeekday(post.createdAt),
-    profile_name: post.authorName ?? null,
-    post: post.text ?? post.rawFragment?.textPreview ?? null,
-    reaction_count: post.reactionCount ?? null,
-    comment_count: post.commentCount ?? null,
-    share_count: post.shareCount ?? null,
+    post_url: coerceBiValue(post.url, "string"),
+    created_at: coerceBiValue(post.createdAt, "string"),
+    calendar_week: coerceBiValue(deriveCalendarWeek(post.createdAt), "string"),
+    weekday: coerceBiValue(deriveWeekday(post.createdAt), "string"),
+    group_type: coerceBiValue(plan.group_type, "string"),
+    profile_name: coerceBiValue(post.authorName, "string"),
+    source_language: coerceBiValue(analysis?.sourceLanguage, "string", {
+      defaultString: "unknown",
+    }),
+    post: coerceBiValue(post.text ?? post.rawFragment?.textPreview, "string"),
+    post_english: coerceBiValue(analysis?.translatedPostEn, "string"),
+    analysis_summary_en: coerceBiValue(analysis?.summary, "string"),
+    analysis_confidence: coerceBiValue(analysis?.confidence, "number"),
+    reaction_count: coerceBiValue(post.reactionCount, "number"),
+    comment_count: coerceBiValue(post.commentCount, "number"),
+    share_count: coerceBiValue(post.shareCount, "number"),
   };
 
   for (const column of plan.columns ?? []) {
-    row[column.key] = dynamicValues[column.key] ?? null;
+    row[column.key] = coerceBiValue(dynamicValues[column.key], column.type, {
+      defaultString: "unknown",
+      defaultNumber: 0,
+    });
   }
 
   return row;

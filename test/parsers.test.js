@@ -82,3 +82,180 @@ test("extractStructuredPostsFromPayload finds network posts and ignores empty pa
 
   assert.deepEqual(emptyPosts, []);
 });
+
+test("extractStructuredPostsFromPayload keeps posts when the requested group is numeric and the payload uses a vanity slug", () => {
+  const payloadBody = JSON.stringify({
+    data: {
+      node: {
+        __typename: "Group",
+        group_feed: {
+          edges: [
+            {
+              node: {
+                __typename: "Story",
+                post_id: "26097131639978760",
+                url: "https://www.facebook.com/groups/mauvaisplantunisieofficiel/permalink/26097131639978760/",
+                target_group: {
+                  id: "3024678207650763",
+                  url: "https://www.facebook.com/groups/mauvaisplantunisieofficiel/",
+                },
+                feedback: {
+                  associated_group: {
+                    id: "3024678207650763",
+                  },
+                },
+                actors: [
+                  {
+                    id: "100010955102583",
+                    name: "Ivan Alvarez",
+                  },
+                ],
+                creation_time: 1774181315,
+                message: {
+                  text: "Public group post carried by a vanity slug URL.",
+                },
+              },
+            },
+          ],
+        },
+      },
+    },
+  });
+
+  const posts = extractStructuredPostsFromPayload(
+    {
+      url: "https://www.facebook.com/api/graphql/",
+      body: payloadBody,
+    },
+    {
+      groupUrl: "https://www.facebook.com/groups/3024678207650763/",
+    },
+  );
+
+  assert.equal(posts.length, 1);
+  assert.equal(posts[0].id, "26097131639978760");
+  assert.equal(posts[0].groupUrl, "https://www.facebook.com/groups/3024678207650763/");
+  assert.match(posts[0].url, /\/groups\/mauvaisplantunisieofficiel\/permalink\/26097131639978760\//i);
+  assert.equal(posts[0].authorName, "Ivan Alvarez");
+});
+
+test("extractStructuredPostsFromPayload reads deeply nested Comet message text", () => {
+  const payloadBody = JSON.stringify({
+    data: {
+      node: {
+        __typename: "Group",
+        group_feed: {
+          edges: [
+            {
+              node: {
+                __typename: "Story",
+                post_id: "26097131639978760",
+                url: "https://www.facebook.com/groups/mauvaisplantunisieofficiel/permalink/26097131639978760/",
+                target_group: {
+                  id: "3024678207650763",
+                  url: "https://www.facebook.com/groups/mauvaisplantunisieofficiel/",
+                },
+                actors: [
+                  {
+                    id: "100010955102583",
+                    name: "Ivan Alvarez",
+                  },
+                ],
+                comet_sections: {
+                  content: {
+                    story: {
+                      comet_sections: {
+                        message: {
+                          story: {
+                            message: {
+                              text: "Deep Comet message text that should be extracted.",
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+    },
+  });
+
+  const posts = extractStructuredPostsFromPayload(
+    {
+      url: "https://www.facebook.com/api/graphql/",
+      body: payloadBody,
+    },
+    {
+      groupUrl: "https://www.facebook.com/groups/3024678207650763/",
+    },
+  );
+
+  assert.equal(posts.length, 1);
+  assert.equal(posts[0].id, "26097131639978760");
+  assert.equal(posts[0].text, "Deep Comet message text that should be extracted.");
+});
+
+test("extractStructuredPostsFromPayload rejects shallow plugin and comment-shaped nodes", () => {
+  const payloadBody = JSON.stringify({
+    data: {
+      node: {
+        __typename: "Group",
+        group_feed: {
+          edges: [
+            {
+              node: {
+                __typename: "GroupsCometFeedStoryAttachmentRenderer",
+                group_id: "3024678207650763",
+                post_id: "11111111111111111",
+                tracking: JSON.stringify({
+                  top_level_post_id: "11111111111111111",
+                }),
+              },
+            },
+            {
+              node: {
+                __typename: "Comment",
+                post_id: "22222222222222222",
+                group_id: "3024678207650763",
+                message: {
+                  text: "This is comment noise and must not be accepted as a post.",
+                },
+              },
+            },
+            {
+              node: {
+                __typename: "Story",
+                post_id: "33333333333333333",
+                url: "https://www.facebook.com/groups/mauvaisplantunisieofficiel/permalink/33333333333333333/",
+                target_group: {
+                  id: "3024678207650763",
+                },
+                message: {
+                  text: "Only this real post should survive.",
+                },
+              },
+            },
+          ],
+        },
+      },
+    },
+  });
+
+  const posts = extractStructuredPostsFromPayload(
+    {
+      url: "https://www.facebook.com/api/graphql/",
+      body: payloadBody,
+    },
+    {
+      groupUrl: "https://www.facebook.com/groups/3024678207650763/",
+    },
+  );
+
+  assert.equal(posts.length, 1);
+  assert.equal(posts[0].id, "33333333333333333");
+  assert.equal(posts[0].text, "Only this real post should survive.");
+});

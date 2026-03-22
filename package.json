@@ -1,16 +1,16 @@
 {
   "name": "facebook-public-group-scraper",
   "version": "0.1.0",
-  "description": "Production-oriented Facebook public group scraper with Playwright, proxy support, checkpointing, and Gemini XLSX export.",
+  "description": "Facebook group scraper with Playwright, structured extraction, proxy support, checkpointing, and BI-oriented Gemini XLSX export.",
   "license": "MIT",
   "author": "medramizairi (RidyX)",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ramizairi/Facebook-Public-Group-Scraper-MVP.git"
+    "url": "git+https://github.com/ridy-saas/Facebook-Public-Group-Scraper-MVP.git"
   },
-  "homepage": "https://github.com/ramizairi/Facebook-Public-Group-Scraper-MVP",
+  "homepage": "https://github.com/ridy-saas/Facebook-Public-Group-Scraper-MVP",
   "bugs": {
-    "url": "https://github.com/ramizairi/Facebook-Public-Group-Scraper-MVP/issues"
+    "url": "https://github.com/ridy-saas/Facebook-Public-Group-Scraper-MVP/issues"
   },
   "type": "module",
   "main": "main.js",

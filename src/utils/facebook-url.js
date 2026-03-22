@@ -1,4 +1,5 @@
 const FACEBOOK_HOSTS = new Set(["facebook.com", "www.facebook.com", "m.facebook.com"]);
+const GROUP_POST_PATH_REGEX = /^\/groups\/([^/]+)\/(posts|permalink)\/(\d+)(?:\/|$)/i;
 
 function normalizeHost(hostname) {
   return FACEBOOK_HOSTS.has(hostname) ? "www.facebook.com" : hostname;
@@ -47,6 +48,10 @@ export function extractGroupSlugOrId(input) {
   return new URL(normalized).pathname.split("/").filter(Boolean)[1] ?? null;
 }
 
+export function isNumericGroupIdentifier(value) {
+  return typeof value === "string" && /^\d+$/.test(value.trim());
+}
+
 export function extractPostInfoFromUrl(input) {
   const url = canonicalizeUrl(input);
   if (!url) {
@@ -54,7 +59,7 @@ export function extractPostInfoFromUrl(input) {
   }
 
   const parsed = new URL(url);
-  const match = parsed.pathname.match(/^\/groups\/([^/]+)\/(posts|permalink)\/(\d+)(?:\/|$)/i);
+  const match = parsed.pathname.match(GROUP_POST_PATH_REGEX);
   if (!match) {
     return null;
   }
@@ -69,6 +74,29 @@ export function extractPostInfoFromUrl(input) {
 
 export function normalizePostUrl(input) {
   return extractPostInfoFromUrl(input)?.canonicalUrl ?? null;
+}
+
+export function looksLikeGroupPostUrl(input, currentGroupSlugOrId = null) {
+  const postInfo = extractPostInfoFromUrl(input);
+  if (!postInfo) {
+    return false;
+  }
+
+  if (!currentGroupSlugOrId) {
+    return true;
+  }
+
+  const expected = String(currentGroupSlugOrId).trim().toLowerCase();
+  const actual = String(postInfo.groupSlugOrId).trim().toLowerCase();
+  if (!expected || !actual) {
+    return true;
+  }
+
+  if (expected === actual) {
+    return true;
+  }
+
+  return isNumericGroupIdentifier(expected) || isNumericGroupIdentifier(actual);
 }
 
 export function sameGroupUrl(left, right) {

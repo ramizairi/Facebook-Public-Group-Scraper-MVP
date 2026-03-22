@@ -110,6 +110,8 @@ test("buildRow includes post text with textPreview fallback", () => {
     },
     {
       summary: "Ride request from Tunis to Sousse tomorrow after 15:00.",
+      sourceLanguage: "french",
+      translatedPostEn: "Hello, I am looking for a seat from Tunis to Sousse tomorrow after 15:00.",
       confidence: 0.88,
       values: {
         status: "request",
@@ -122,6 +124,11 @@ test("buildRow includes post text with textPreview fallback", () => {
   assert.equal(withText.post, "Slm, Je cherche une place de tunis a sousse demain a partir de 15h");
   assert.equal(withText.calendar_week, "2026-W12");
   assert.equal(withText.weekday, "Wednesday");
+  assert.equal(withText.group_type, "rideshare");
+  assert.equal(withText.source_language, "french");
+  assert.equal(withText.post_english, "Hello, I am looking for a seat from Tunis to Sousse tomorrow after 15:00.");
+  assert.equal(withText.analysis_summary_en, "Ride request from Tunis to Sousse tomorrow after 15:00.");
+  assert.equal(withText.analysis_confidence, 0.88);
   assert.equal(withText.reaction_count, 5);
   assert.equal(withText.comment_count, 2);
   assert.equal(withText.share_count, 1);
@@ -141,7 +148,10 @@ test("buildRow includes post text with textPreview fallback", () => {
   );
 
   assert.equal(fallback.post, "preview text");
-  assert.equal(fallback.status, null);
+  assert.equal(fallback.source_language, "unknown");
+  assert.equal(fallback.post_english, "");
+  assert.equal(fallback.analysis_confidence, 0);
+  assert.equal(fallback.status, "unknown");
 });
 
 test("normalizeAnalysisPlan sanitizes dynamic columns and falls back safely", () => {
@@ -176,6 +186,10 @@ test("buildWorkbookColumns combines fixed and dynamic columns", () => {
   const columns = buildWorkbookColumns(DEFAULT_ANALYSIS_PLAN);
   assert.equal(columns[0].key, "post_url");
   assert.equal(columns[0].label, "Post URL");
+  assert.ok(columns.some((column) => column.key === "group_type"));
+  assert.ok(columns.some((column) => column.key === "source_language"));
+  assert.ok(columns.some((column) => column.key === "post_english"));
+  assert.ok(columns.some((column) => column.key === "analysis_confidence"));
   assert.ok(columns.some((column) => column.key === "reaction_count"));
   assert.ok(columns.some((column) => column.key === "comment_count"));
   assert.ok(columns.some((column) => column.key === "share_count"));

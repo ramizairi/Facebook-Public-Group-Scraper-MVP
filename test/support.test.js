@@ -7,12 +7,14 @@ import test from "node:test";
 import { buildCheckpoint, loadCheckpoint, persistCheckpoint } from "../src/core/checkpoint.js";
 import { DedupStore } from "../src/core/dedup-store.js";
 import { normalizeCandidate } from "../src/core/normalize.js";
+import { mergeEnrichedPost, selectBestEnrichmentCandidate } from "../src/core/post-enrichment.js";
 import { shouldRecycleBrowser, shouldRecycleOnNetworkStall } from "../src/core/run-scraper.js";
 import {
   extractDomPosts,
   shouldClickDomLoadMoreControl,
   shouldClickDomTextExpanderControl,
 } from "../src/extract/dom-fallback.js";
+import { OutputManager } from "../src/output/manager.js";
 import { toOutputRow } from "../src/output/output-row.js";
 import { sameGroupUrl } from "../src/utils/facebook-url.js";
 import { redactProxyConfig, summarizeProxyForConsole } from "../src/utils/redact.js";
@@ -126,6 +128,55 @@ test("normalizeCandidate can keep shell posts in unfiltered mode", () => {
   assert.equal(normalized?.text, null);
 });
 
+test("enrichment merges missing text into an existing accepted post without changing identity", () => {
+  const targetPost = normalizeCandidate(
+    {
+      id: "26097131639978760",
+      url: "https://www.facebook.com/groups/mauvaisplantunisieofficiel/permalink/26097131639978760/",
+      groupUrl: "https://www.facebook.com/groups/3024678207650763/",
+      authorName: null,
+      createdAt: null,
+      text: null,
+      media: [],
+      sourceType: "network",
+      rawFragment: {
+        source: "graphql",
+        reference: "candidate-1",
+      },
+    },
+    "https://www.facebook.com/groups/3024678207650763/",
+    { allowShellPosts: true },
+  );
+
+  const selected = selectBestEnrichmentCandidate(
+    [
+      {
+        id: "26097131639978760",
+        url: "https://www.facebook.com/groups/mauvaisplantunisieofficiel/permalink/26097131639978760/",
+        groupUrl: "https://www.facebook.com/groups/3024678207650763/",
+        text: "Deep post text recovered from enrichment.",
+        authorName: "Ivan Alvarez",
+        createdAt: "2026-03-22T12:00:00.000Z",
+        media: [],
+        sourceType: "dom",
+        rawFragment: {
+          source: "dom-fallback",
+          reference: "dom:26097131639978760",
+        },
+      },
+    ],
+    targetPost,
+    "https://www.facebook.com/groups/3024678207650763/",
+  );
+
+  assert.ok(selected);
+  assert.equal(mergeEnrichedPost(targetPost, selected), true);
+  assert.equal(targetPost.id, "26097131639978760");
+  assert.equal(targetPost.text, "Deep post text recovered from enrichment.");
+  assert.equal(targetPost.authorName, "Ivan Alvarez");
+  assert.equal(targetPost.rawFragment?.enrichedFrom, "dom-fallback");
+});
+
 test("checkpoint persistence round-trips posts and stats", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "fb-checkpoint-test-"));
 
@@ -184,6 +235,61 @@ test("checkpoint persistence round-trips posts and stats", async () => {
   }
 });
 
+test("output manager rewrites JSON outputs from the current normalized post list", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "fb-output-manager-test-"));
+
+  try {
+    const outputManager = await OutputManager.create(tempDir);
+    const initialPosts = [
+      normalizeCandidate(
+        {
+          id: "1",
+          url: "https://www.facebook.com/groups/123456789012345/posts/1/",
+          groupUrl: "https://www.facebook.com/groups/123456789012345/",
+          text: "First post",
+          media: [],
+          sourceType: "network",
+          rawFragment: null,
+        },
+        "https://www.facebook.com/groups/123456789012345/",
+      ),
+      normalizeCandidate(
+        {
+          id: "2",
+          url: "https://www.facebook.com/groups/123456789012345/posts/2/",
+          groupUrl: "https://www.facebook.com/groups/123456789012345/",
+          text: "Second post",
+          media: [],
+          sourceType: "network",
+          rawFragment: null,
+        },
+        "https://www.facebook.com/groups/123456789012345/",
+      ),
+    ];
+
+    await outputManager.resetPosts(initialPosts);
+    await outputManager.appendPosts(initialPosts);
+    await outputManager.writePostsJson(initialPosts.slice(0, 1));
+
+    const postsJson = JSON.parse(await fs.readFile(path.join(tempDir, "posts.json"), "utf8"));
+    const postsJsonl = (await fs.readFile(path.join(tempDir, "posts.jsonl"), "utf8"))
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    const outputJson = JSON.parse(await fs.readFile(path.join(tempDir, "output.json"), "utf8"));
+
+    assert.equal(postsJson.length, 1);
+    assert.equal(postsJsonl.length, 1);
+    assert.equal(outputJson.length, 1);
+    assert.equal(postsJson[0].id, "1");
+    assert.equal(postsJsonl[0].id, "1");
+    assert.equal(outputJson[0].url, "https://www.facebook.com/groups/123456789012345/posts/1/");
+  } finally {
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("sameGroupUrl matches canonical group urls and rejects different groups", () => {
   assert.equal(
     sameGroupUrl(
@@ -200,6 +306,30 @@ test("sameGroupUrl matches canonical group urls and rejects different groups", (
     ),
     false,
   );
+});
+
+test("extractDomPosts accepts vanity-slug post urls when the current group url is numeric", async () => {
+  const page = {
+    evaluate: async () => [
+      {
+        index: 0,
+        url: "https://www.facebook.com/groups/mauvaisplantunisieofficiel/permalink/26097131639978760/",
+        authorName: "Ivan Alvarez",
+        textBlocks: ["Ivan Alvarez", "Public group post carried by a vanity slug URL."],
+        media: [],
+        reactionCount: null,
+        preview: "Ivan Alvarez Public group post carried by a vanity slug URL.",
+      },
+    ],
+  };
+
+  const posts = await extractDomPosts(page, {
+    groupUrl: "https://www.facebook.com/groups/3024678207650763/",
+  });
+
+  assert.equal(posts.length, 1);
+  assert.equal(posts[0].url, "https://www.facebook.com/groups/mauvaisplantunisieofficiel/permalink/26097131639978760/");
+  assert.equal(posts[0].groupUrl, "https://www.facebook.com/groups/3024678207650763/");
 });
 
 test("extractDomPosts falls back to preview text when dir-auto blocks are thin", async () => {

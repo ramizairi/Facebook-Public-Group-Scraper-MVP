@@ -6,7 +6,7 @@ node_modules/
 /.env.development
 /cookies.json
 /fb-group-network.txt
-/proxy/
+/proxy/*
 npm-debug.log*
 !src/output/
 !src/output/**

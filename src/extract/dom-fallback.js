@@ -1,4 +1,4 @@
-import { extractGroupSlugOrId } from "../utils/facebook-url.js";
+import { extractGroupSlugOrId, isNumericGroupIdentifier, looksLikeGroupPostUrl } from "../utils/facebook-url.js";
 
 const DOM_ACTION_LABELS = new Set([
   "like",
@@ -36,23 +36,11 @@ const DOM_TEXT_EXPANDER_PATTERNS = [
 ];
 
 function looksLikeTopLevelPostHref(href, currentGroupSlugOrId) {
-  if (!href) {
-    return false;
-  }
-
-  if (!/\/groups\//i.test(href)) {
-    return false;
-  }
-
   if (/comment_id=/i.test(href)) {
     return false;
   }
 
-  if (currentGroupSlugOrId && !href.includes(`/groups/${currentGroupSlugOrId}/`)) {
-    return false;
-  }
-
-  return /\/groups\/[^/]+\/(?:posts|permalink)\/\d+/i.test(href);
+  return looksLikeGroupPostUrl(href, currentGroupSlugOrId);
 }
 
 function dedupeStrings(values) {
@@ -180,24 +168,23 @@ export async function readDomFeedState(page, context) {
         }
       }
 
-      function looksLikeTopLevelPostHref(href, currentGroupSlugOrId) {
-        if (!href) {
+    function looksLikeTopLevelPostHref(href, currentGroupSlugOrId) {
+        if (!href || !/\/groups\/[^/]+\/(?:posts|permalink)\/\d+/i.test(href) || /comment_id=/i.test(href)) {
           return false;
         }
 
-        if (!/\/groups\//i.test(href)) {
-          return false;
+        const match = href.match(/\/groups\/([^/]+)\/(?:posts|permalink)\/\d+/i);
+        const actualGroupSlugOrId = match?.[1]?.toLowerCase() ?? null;
+        const expectedGroupSlugOrId = currentGroupSlugOrId?.toLowerCase() ?? null;
+        if (!actualGroupSlugOrId || !expectedGroupSlugOrId) {
+          return true;
         }
 
-        if (/comment_id=/i.test(href)) {
-          return false;
+        if (actualGroupSlugOrId === expectedGroupSlugOrId) {
+          return true;
         }
 
-        if (currentGroupSlugOrId && !href.includes(`/groups/${currentGroupSlugOrId}/`)) {
-          return false;
-        }
-
-        return /\/groups\/[^/]+\/(?:posts|permalink)\/\d+/i.test(href);
+        return /^\d+$/.test(actualGroupSlugOrId) || /^\d+$/.test(expectedGroupSlugOrId);
       }
 
       const articles = Array.from(
@@ -243,24 +230,23 @@ export async function nudgeDomFeed(page, context) {
         }
       }
 
-      function looksLikeTopLevelPostHref(href, currentGroupSlugOrId) {
-        if (!href) {
+    function looksLikeTopLevelPostHref(href, currentGroupSlugOrId) {
+        if (!href || !/\/groups\/[^/]+\/(?:posts|permalink)\/\d+/i.test(href) || /comment_id=/i.test(href)) {
           return false;
         }
 
-        if (!/\/groups\//i.test(href)) {
-          return false;
+        const match = href.match(/\/groups\/([^/]+)\/(?:posts|permalink)\/\d+/i);
+        const actualGroupSlugOrId = match?.[1]?.toLowerCase() ?? null;
+        const expectedGroupSlugOrId = currentGroupSlugOrId?.toLowerCase() ?? null;
+        if (!actualGroupSlugOrId || !expectedGroupSlugOrId) {
+          return true;
         }
 
-        if (/comment_id=/i.test(href)) {
-          return false;
+        if (actualGroupSlugOrId === expectedGroupSlugOrId) {
+          return true;
         }
 
-        if (currentGroupSlugOrId && !href.includes(`/groups/${currentGroupSlugOrId}/`)) {
-          return false;
-        }
-
-        return /\/groups\/[^/]+\/(?:posts|permalink)\/\d+/i.test(href);
+        return /^\d+$/.test(actualGroupSlugOrId) || /^\d+$/.test(expectedGroupSlugOrId);
       }
 
       function collectTopLevelArticles() {
@@ -418,23 +404,22 @@ export async function extractDomPosts(page, context) {
     }
 
     function looksLikeTopLevelPostHref(href, currentGroupSlugOrId) {
-      if (!href) {
+      if (!href || !/\/groups\/[^/]+\/(?:posts|permalink)\/\d+/i.test(href) || /comment_id=/i.test(href)) {
         return false;
       }
 
-      if (!/\/groups\//i.test(href)) {
-        return false;
+      const match = href.match(/\/groups\/([^/]+)\/(?:posts|permalink)\/\d+/i);
+      const actualGroupSlugOrId = match?.[1]?.toLowerCase() ?? null;
+      const expectedGroupSlugOrId = currentGroupSlugOrId?.toLowerCase() ?? null;
+      if (!actualGroupSlugOrId || !expectedGroupSlugOrId) {
+        return true;
       }
 
-      if (/comment_id=/i.test(href)) {
-        return false;
+      if (actualGroupSlugOrId === expectedGroupSlugOrId) {
+        return true;
       }
 
-      if (currentGroupSlugOrId && !href.includes(`/groups/${currentGroupSlugOrId}/`)) {
-        return false;
-      }
-
-      return /\/groups\/[^/]+\/(?:posts|permalink)\/\d+/i.test(href);
+      return /^\d+$/.test(actualGroupSlugOrId) || /^\d+$/.test(expectedGroupSlugOrId);
     }
 
     function collectAuthorName(article) {

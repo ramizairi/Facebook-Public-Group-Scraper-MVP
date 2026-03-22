@@ -31,18 +31,18 @@ export class ApifyOutputManager {
 
   async resetPosts(posts, unfilteredPosts = posts) {
     await Actor.setValue("output.json", toOutputRows(posts));
-    await Actor.setValue("posts.json", unfilteredPosts);
+    await Actor.setValue("posts.json", posts);
   }
 
   async appendPosts(_posts, unfilteredPosts = []) {
-    if (unfilteredPosts.length) {
-      await Actor.pushData(unfilteredPosts);
+    if (_posts.length) {
+      await Actor.pushData(_posts);
     }
   }
 
   async writePostsJson(posts, unfilteredPosts = posts) {
     await Actor.setValue("output.json", toOutputRows(posts));
-    await Actor.setValue("posts.json", unfilteredPosts);
+    await Actor.setValue("posts.json", posts);
   }
 
   async writeStats(stats) {
