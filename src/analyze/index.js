@@ -19,8 +19,6 @@ export function buildRow(post, analysis, plan = { columns: [] }) {
     reaction_count: post.reactionCount ?? null,
     comment_count: post.commentCount ?? null,
     share_count: post.shareCount ?? null,
-    gemini_summary: analysis?.summary ?? null,
-    gemini_confidence: analysis?.confidence ?? null,
   };
 
   for (const column of plan.columns ?? []) {

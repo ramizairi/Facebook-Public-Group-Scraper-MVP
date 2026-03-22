@@ -24,7 +24,7 @@ Rules:
 - choose 4 to 8 dynamic columns only
 - each column must have a key, a type (string, number, boolean), and a human-friendly label
 - values must be directly extractable or safely inferable from the post text or metadata
-- do not create reaction_count, comment_count, share_count, gemini_summary, or gemini_confidence columns because they already exist as fixed columns
+- do not create reaction_count, comment_count or share_count columns because they already exist as fixed columns
 - keep keys in snake_case
 - labels should be human-friendly for Excel
 - allowed column types are string, number, boolean
@@ -37,7 +37,7 @@ Rules:
 - prefer versatile columns such as topic, item_or_service, location_or_route, time_reference, price_or_budget, contact, condition, urgency, or availability when they fit the sample posts
 - do not hardcode one group-specific pattern if a broader intent or category column would work better
 - do not include the fixed columns that already exist:
-  post_url, created_at, calendar_week, weekday, profile_name, post, reaction_count, comment_count, share_count, gemini_summary, gemini_confidence
+  post_url, created_at, calendar_week, weekday, profile_name, post, reaction_count, comment_count, share_count,
 - for Tunisian content, treat French, Tunisian Arabic, and Arabizi carefully
 - if this group is clearly ride-sharing, marketplace, jobs, housing, services, or local community, reflect that in the chosen columns without making the schema brittle
 

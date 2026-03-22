@@ -8,8 +8,6 @@ export const BASE_ANALYSIS_COLUMNS = [
   { key: "reaction_count", label: "Reaction Count" },
   { key: "comment_count", label: "Comment Count" },
   { key: "share_count", label: "Share Count" },
-  { key: "gemini_summary", label: "Gemini Summary" },
-  { key: "gemini_confidence", label: "Gemini Confidence" },
 ];
 
 export function buildWorkbookColumns(plan) {

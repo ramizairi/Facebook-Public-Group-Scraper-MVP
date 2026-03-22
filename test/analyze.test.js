@@ -125,7 +125,6 @@ test("buildRow includes post text with textPreview fallback", () => {
   assert.equal(withText.reaction_count, 5);
   assert.equal(withText.comment_count, 2);
   assert.equal(withText.share_count, 1);
-  assert.equal(withText.gemini_summary, "Ride request from Tunis to Sousse tomorrow after 15:00.");
   assert.equal(withText.status, "request");
   assert.equal(withText.route, "Tunis -> Sousse");
 
@@ -180,8 +179,6 @@ test("buildWorkbookColumns combines fixed and dynamic columns", () => {
   assert.ok(columns.some((column) => column.key === "reaction_count"));
   assert.ok(columns.some((column) => column.key === "comment_count"));
   assert.ok(columns.some((column) => column.key === "share_count"));
-  assert.ok(columns.some((column) => column.key === "gemini_summary"));
-  assert.ok(columns.some((column) => column.key === "gemini_confidence"));
   assert.ok(columns.some((column) => column.key === DEFAULT_ANALYSIS_PLAN.columns[0].key));
 });
 

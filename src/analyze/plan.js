@@ -10,8 +10,6 @@ const RESERVED_KEYS = new Set([
   "reaction_count",
   "comment_count",
   "share_count",
-  "gemini_summary",
-  "gemini_confidence",
 ]);
 
 const REQUIRED_DYNAMIC_COLUMNS = [
