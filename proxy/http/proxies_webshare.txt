@@ -1,2 +1,0 @@
-brd.superproxy.io:33335:brd-customer-hl_b4d20f7e-zone-residential_proxy2:3e0y1e1xrf39
-brd.superproxy.io:33335:brd-customer-hl_b4d20f7e-zone-residential_proxy1:x4bozr62uvwk
