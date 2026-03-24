@@ -164,6 +164,7 @@ Request a scrape and save the returned `output.json`:
 ```bash
 curl -X POST http://127.0.0.1:3000/scrape \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: $API_AUTH_KEY" \
   -d '{"groupUrl":"https://www.facebook.com/groups/.../","maxPosts":25}' \
   -o output.json
 ```
@@ -246,6 +247,11 @@ The API is intentionally small and synchronous:
 - `GET /health`: readiness and busy state
 - `POST /scrape`: accepts `groupUrl` and `maxPosts`, runs a scrape, and returns the generated `output.json`
 
+Required API env vars:
+
+- `API_AUTH_KEY`
+- `API_ALLOWED_ORIGIN`
+
 Example request body:
 
 ```json
@@ -260,8 +266,30 @@ Behavior notes:
 - the API forces direct mode with `--no-proxy`
 - the API forces `HEADLESS=true`
 - the API clears `COOKIES_FILE`, so requests do not depend on a local `cookies.json`
+- `POST /scrape` requires `X-API-Key: <secret>`
+- `GET /health` remains public
+- browser requests are allowed only from the exact `API_ALLOWED_ORIGIN`
 - only one scrape request runs at a time; concurrent requests receive HTTP `409`
-- `npm run test:proxy`
+
+Example local request:
+
+```bash
+curl -X POST http://127.0.0.1:3000/scrape \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: $API_AUTH_KEY" \
+  -d '{"groupUrl":"https://www.facebook.com/groups/123456789012345/","maxPosts":25}' \
+  -o output.json
+```
+
+Browser apps must send:
+
+- `Origin: https://your-frontend.example.com`
+- `X-API-Key: <secret>`
+
+Important security note:
+
+- if you embed `X-API-Key` in a public browser app, users can extract and reuse it
+- for untrusted public users, put your own backend in front of this API instead of exposing the key to the browser
 
 ## Gemini Analyzer and BI Workbook
 
@@ -316,6 +344,7 @@ Example request:
 ```bash
 curl -X POST http://127.0.0.1:${API_PORT:-3000}/scrape \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: $API_AUTH_KEY" \
   -d '{"groupUrl":"https://www.facebook.com/groups/.../","maxPosts":25}' \
   -o output.json
 ```
@@ -331,6 +360,87 @@ Run analyzer only:
 ```bash
 DOCKER_UID=$(id -u) DOCKER_GID=$(id -g) docker compose run --rm scraper npm run analyze:xlsx
 ```
+
+## Public Hosting
+
+Recommended production shape on Debian:
+
+- Docker Compose runs the `api` container on `127.0.0.1:3000`
+- host-level Nginx terminates TLS on your API subdomain
+- only ports `80` and `443` are publicly exposed
+- port `3000` stays private to localhost
+
+1. Set the API env vars in `.env`:
+
+```env
+API_HOST=0.0.0.0
+API_PORT=3000
+API_AUTH_KEY=replace-with-a-long-random-secret
+API_ALLOWED_ORIGIN=https://app.example.com
+```
+
+2. Start the API container:
+
+```bash
+DOCKER_UID=$(id -u) DOCKER_GID=$(id -g) docker compose up -d --build api
+curl http://127.0.0.1:3000/health
+```
+
+3. Install Nginx and Certbot on Debian:
+
+```bash
+sudo apt update
+sudo apt install -y nginx certbot python3-certbot-nginx
+```
+
+4. Install the checked-in Nginx templates:
+
+```bash
+sudo cp deploy/nginx/scrape-api-limit.conf /etc/nginx/conf.d/scrape-api-limit.conf
+sudo cp deploy/nginx/facebook-group-scraper-api.conf /etc/nginx/sites-available/facebook-group-scraper-api.conf
+```
+
+5. Edit the server name in the site file to match your subdomain, then enable it:
+
+```bash
+sudo ln -sf /etc/nginx/sites-available/facebook-group-scraper-api.conf /etc/nginx/sites-enabled/facebook-group-scraper-api.conf
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+6. Issue the TLS certificate after DNS points to the server:
+
+```bash
+sudo certbot --nginx -d api.example.com
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+7. Keep the firewall limited to `80/443`:
+
+```bash
+sudo ufw allow OpenSSH
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw enable
+```
+
+Smoke tests:
+
+```bash
+curl https://api.example.com/health
+curl -X POST https://api.example.com/scrape \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: $API_AUTH_KEY" \
+  -d '{"groupUrl":"https://www.facebook.com/groups/.../","maxPosts":25}' \
+  -o output.json
+```
+
+Deployment requirements:
+
+- DNS for the subdomain must point to the server before issuing TLS
+- keep `API_ALLOWED_ORIGIN` set to the exact frontend browser origin, not the API subdomain unless they are the same
+- do not open port `3000` publicly; the Compose file binds it to `127.0.0.1` only
 
 ## Apify
 

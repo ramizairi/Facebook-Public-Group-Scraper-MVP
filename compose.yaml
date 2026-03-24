@@ -16,6 +16,7 @@ services:
       context: .
       dockerfile: Dockerfile
     image: facebook-public-group-scraper
+    restart: unless-stopped
     user: "${DOCKER_UID:-1000}:${DOCKER_GID:-1000}"
     env_file:
       - .env
@@ -30,4 +31,4 @@ services:
     volumes:
       - ./output:/app/output
     ports:
-      - "${API_PORT:-3000}:${API_PORT:-3000}"
+      - "127.0.0.1:${API_PORT:-3000}:${API_PORT:-3000}"
