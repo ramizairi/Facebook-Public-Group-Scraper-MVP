@@ -153,6 +153,21 @@ Scrape one-off public content directly:
 node src/index.js --url "https://www.facebook.com/groups/..." --no-proxy --max-posts 100
 ```
 
+Run the API server:
+
+```bash
+npm run start:api
+```
+
+Request a scrape and save the returned `output.json`:
+
+```bash
+curl -X POST http://127.0.0.1:3000/scrape \
+  -H "Content-Type: application/json" \
+  -d '{"groupUrl":"https://www.facebook.com/groups/.../","maxPosts":25}' \
+  -o output.json
+```
+
 Scrape using an authenticated cookie export:
 
 ```bash
@@ -223,6 +238,29 @@ Useful scripts:
 
 - `npm run start:proxy`
 - `npm run start:no-proxy`
+
+## API
+
+The API is intentionally small and synchronous:
+
+- `GET /health`: readiness and busy state
+- `POST /scrape`: accepts `groupUrl` and `maxPosts`, runs a scrape, and returns the generated `output.json`
+
+Example request body:
+
+```json
+{
+  "groupUrl": "https://www.facebook.com/groups/123456789012345/",
+  "maxPosts": 25
+}
+```
+
+Behavior notes:
+
+- the API forces direct mode with `--no-proxy`
+- the API forces `HEADLESS=true`
+- the API clears `COOKIES_FILE`, so requests do not depend on a local `cookies.json`
+- only one scrape request runs at a time; concurrent requests receive HTTP `409`
 - `npm run test:proxy`
 
 ## Gemini Analyzer and BI Workbook
@@ -265,6 +303,21 @@ Build and run through Compose:
 ```bash
 DOCKER_UID=$(id -u) DOCKER_GID=$(id -g) docker compose build
 DOCKER_UID=$(id -u) DOCKER_GID=$(id -g) docker compose run --rm scraper
+```
+
+Run the API server through Compose:
+
+```bash
+DOCKER_UID=$(id -u) DOCKER_GID=$(id -g) docker compose up api
+```
+
+Example request:
+
+```bash
+curl -X POST http://127.0.0.1:${API_PORT:-3000}/scrape \
+  -H "Content-Type: application/json" \
+  -d '{"groupUrl":"https://www.facebook.com/groups/.../","maxPosts":25}' \
+  -o output.json
 ```
 
 Force direct mode:
