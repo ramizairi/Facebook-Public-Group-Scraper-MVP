@@ -52,6 +52,39 @@ test("runApiScrapeRequest forwards API_COOKIES_FILE into scraper config", async 
     );
 
     assert.equal(capturedConfig.cookiesFile, path.join(tempDir, "cookies.json"));
+    assert.equal(capturedConfig.noProxy, true);
+  } finally {
+    await fs.rm(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("runApiScrapeRequest can allow proxy config for hosted runs", async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "fb-api-request-test-"));
+  let capturedConfig;
+
+  try {
+    await runApiScrapeRequest(
+      {
+        groupUrl: "https://www.facebook.com/groups/525468629029673/",
+        maxPosts: 5,
+      },
+      {
+        cwd: tempDir,
+        apiConfig: {
+          forceNoProxy: false,
+        },
+        outputManagerClass: FakeOutputManager,
+        createLoggerImpl: () => fakeLogger,
+        runScraperImpl: async (config) => {
+          capturedConfig = config;
+          return {
+            posts: [],
+          };
+        },
+      },
+    );
+
+    assert.equal(capturedConfig.noProxy, false);
   } finally {
     await fs.rm(tempDir, { recursive: true, force: true });
   }

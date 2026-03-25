@@ -38,24 +38,25 @@ export async function runApiScrapeRequest(
 ) {
   const request = parseApiScrapeRequest(payload);
   const outputDir = resolveApiOutputDir(cwd, request.groupUrl);
-  const config = loadConfig(
-    [
-      "--url",
-      request.groupUrl,
-      "--max-posts",
-      String(request.maxPosts),
-      "--output-dir",
-      outputDir,
-      "--no-proxy",
-      "--resume",
-      "false",
-    ],
-    cwd,
-    {
-      COOKIES_FILE: apiConfig?.cookiesFile ?? "",
-      HEADLESS: "true",
-    },
-  );
+  const argv = [
+    "--url",
+    request.groupUrl,
+    "--max-posts",
+    String(request.maxPosts),
+    "--output-dir",
+    outputDir,
+    "--resume",
+    "false",
+  ];
+
+  if (apiConfig?.forceNoProxy !== false) {
+    argv.push("--no-proxy");
+  }
+
+  const config = loadConfig(argv, cwd, {
+    COOKIES_FILE: apiConfig?.cookiesFile ?? "",
+    HEADLESS: "true",
+  });
   const outputManager = await outputManagerClass.create(config.outputDir);
   const logger = createLoggerImpl(outputManager.paths.logFile);
 

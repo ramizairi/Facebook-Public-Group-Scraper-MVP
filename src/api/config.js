@@ -1,5 +1,7 @@
 const DEFAULT_API_HOST = "0.0.0.0";
 const DEFAULT_API_PORT = 3000;
+const BOOLEAN_TRUE = new Set(["1", "true", "yes", "on"]);
+const BOOLEAN_FALSE = new Set(["0", "false", "no", "off"]);
 
 function resolveApiPort(value) {
   const parsed = Number(value);
@@ -12,6 +14,27 @@ function requireNonEmptyString(name, value) {
   }
 
   throw new Error(`${name} is required.`);
+}
+
+function parseBoolean(value, fallback) {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value !== "string" || !value.length) {
+    return fallback;
+  }
+
+  const normalized = value.toLowerCase();
+  if (BOOLEAN_TRUE.has(normalized)) {
+    return true;
+  }
+
+  if (BOOLEAN_FALSE.has(normalized)) {
+    return false;
+  }
+
+  return fallback;
 }
 
 function normalizeOrigin(name, value) {
@@ -45,5 +68,6 @@ export function loadApiServerConfig(env = process.env) {
       requireNonEmptyString("API_ALLOWED_ORIGIN", env.API_ALLOWED_ORIGIN),
     ),
     cookiesFile,
+    forceNoProxy: parseBoolean(env.API_FORCE_NO_PROXY, true),
   };
 }

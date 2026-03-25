@@ -255,6 +255,7 @@ Required API env vars:
 Optional API env vars:
 
 - `API_COOKIES_FILE`
+- `API_FORCE_NO_PROXY`
 
 Example request body:
 
@@ -267,9 +268,10 @@ Example request body:
 
 Behavior notes:
 
-- the API forces direct mode with `--no-proxy`
+- the API defaults to direct mode with `--no-proxy`
 - the API forces `HEADLESS=true`
 - the API defaults to no cookies, but can use a server-side cookies file when `API_COOKIES_FILE` is set
+- set `API_FORCE_NO_PROXY=false` to let the hosted API use the normal proxy env vars such as `PROXY_SERVER`
 - `POST /scrape` requires `X-API-Key: <secret>`
 - `GET /health` remains public
 - browser requests are allowed only from the exact `API_ALLOWED_ORIGIN`
@@ -299,6 +301,7 @@ If you need authenticated group access on the hosted API:
 
 - place `cookies.json` in the project root before `docker compose build`
 - set `API_COOKIES_FILE=cookies.json` in `.env`
+- if the VPS IP gets blocked, set `API_FORCE_NO_PROXY=false` and configure `PROXY_SERVER` or `PROXY_POOL_DIR`
 - rebuild the image after changing the cookie file
 
 ## Gemini Analyzer and BI Workbook

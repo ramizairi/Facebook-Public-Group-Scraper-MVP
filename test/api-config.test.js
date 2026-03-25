@@ -30,6 +30,7 @@ test("loadApiServerConfig normalizes host, port, and allowed origin", () => {
     API_AUTH_KEY: "secret",
     API_ALLOWED_ORIGIN: "https://app.example.com/path?q=1",
     API_COOKIES_FILE: "cookies.json",
+    API_FORCE_NO_PROXY: "false",
   });
 
   assert.deepEqual(config, {
@@ -38,5 +39,15 @@ test("loadApiServerConfig normalizes host, port, and allowed origin", () => {
     authKey: "secret",
     allowedOrigin: "https://app.example.com",
     cookiesFile: "cookies.json",
+    forceNoProxy: false,
   });
+});
+
+test("loadApiServerConfig defaults API_FORCE_NO_PROXY to true", () => {
+  const config = loadApiServerConfig({
+    API_AUTH_KEY: "secret",
+    API_ALLOWED_ORIGIN: "https://app.example.com",
+  });
+
+  assert.equal(config.forceNoProxy, true);
 });
