@@ -179,7 +179,7 @@ export function createApiServer(
 
       try {
         const requestPayload = parseApiScrapeRequest(payload);
-        const result = await runScrapeRequest(requestPayload, { cwd });
+        const result = await runScrapeRequest(requestPayload, { cwd, apiConfig });
 
         response.writeHead(200, {
           "Content-Type": "application/json; charset=utf-8",

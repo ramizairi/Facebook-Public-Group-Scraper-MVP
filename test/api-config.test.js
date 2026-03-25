@@ -29,6 +29,7 @@ test("loadApiServerConfig normalizes host, port, and allowed origin", () => {
     API_PORT: "4000",
     API_AUTH_KEY: "secret",
     API_ALLOWED_ORIGIN: "https://app.example.com/path?q=1",
+    API_COOKIES_FILE: "cookies.json",
   });
 
   assert.deepEqual(config, {
@@ -36,6 +37,6 @@ test("loadApiServerConfig normalizes host, port, and allowed origin", () => {
     port: 4000,
     authKey: "secret",
     allowedOrigin: "https://app.example.com",
+    cookiesFile: "cookies.json",
   });
 });
-

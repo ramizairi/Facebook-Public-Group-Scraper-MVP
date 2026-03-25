@@ -31,6 +31,11 @@ function normalizeOrigin(name, value) {
 }
 
 export function loadApiServerConfig(env = process.env) {
+  const cookiesFile =
+    typeof env.API_COOKIES_FILE === "string" && env.API_COOKIES_FILE.trim()
+      ? env.API_COOKIES_FILE.trim()
+      : null;
+
   return {
     host: typeof env.API_HOST === "string" && env.API_HOST.trim() ? env.API_HOST.trim() : DEFAULT_API_HOST,
     port: resolveApiPort(env.API_PORT),
@@ -39,6 +44,6 @@ export function loadApiServerConfig(env = process.env) {
       "API_ALLOWED_ORIGIN",
       requireNonEmptyString("API_ALLOWED_ORIGIN", env.API_ALLOWED_ORIGIN),
     ),
+    cookiesFile,
   };
 }
-

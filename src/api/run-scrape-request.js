@@ -30,6 +30,7 @@ export async function runApiScrapeRequest(
   payload,
   {
     cwd = process.cwd(),
+    apiConfig = null,
     runScraperImpl = runScraper,
     outputManagerClass = OutputManager,
     createLoggerImpl = createLogger,
@@ -51,7 +52,7 @@ export async function runApiScrapeRequest(
     ],
     cwd,
     {
-      COOKIES_FILE: "",
+      COOKIES_FILE: apiConfig?.cookiesFile ?? "",
       HEADLESS: "true",
     },
   );
@@ -64,6 +65,7 @@ export async function runApiScrapeRequest(
     maxPosts: config.maxPosts,
     outputDir: config.outputDir,
     noProxy: config.noProxy,
+    cookiesFile: config.cookiesFile,
   });
 
   const result = await runScraperImpl(config, outputManager, logger);

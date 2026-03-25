@@ -252,6 +252,10 @@ Required API env vars:
 - `API_AUTH_KEY`
 - `API_ALLOWED_ORIGIN`
 
+Optional API env vars:
+
+- `API_COOKIES_FILE`
+
 Example request body:
 
 ```json
@@ -265,7 +269,7 @@ Behavior notes:
 
 - the API forces direct mode with `--no-proxy`
 - the API forces `HEADLESS=true`
-- the API clears `COOKIES_FILE`, so requests do not depend on a local `cookies.json`
+- the API defaults to no cookies, but can use a server-side cookies file when `API_COOKIES_FILE` is set
 - `POST /scrape` requires `X-API-Key: <secret>`
 - `GET /health` remains public
 - browser requests are allowed only from the exact `API_ALLOWED_ORIGIN`
@@ -290,6 +294,12 @@ Important security note:
 
 - if you embed `X-API-Key` in a public browser app, users can extract and reuse it
 - for untrusted public users, put your own backend in front of this API instead of exposing the key to the browser
+
+If you need authenticated group access on the hosted API:
+
+- place `cookies.json` in the project root before `docker compose build`
+- set `API_COOKIES_FILE=cookies.json` in `.env`
+- rebuild the image after changing the cookie file
 
 ## Gemini Analyzer and BI Workbook
 
@@ -377,6 +387,7 @@ API_HOST=0.0.0.0
 API_PORT=3000
 API_AUTH_KEY=replace-with-a-long-random-secret
 API_ALLOWED_ORIGIN=https://app.example.com
+API_COOKIES_FILE=cookies.json
 ```
 
 2. Start the API container:
